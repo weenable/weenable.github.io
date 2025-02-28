@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en-us"
+  dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+
+<link rel="icon" type="image/ico" href="https://weenable.github.io//favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://weenable.github.io//favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://weenable.github.io//favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://weenable.github.io//android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://weenable.github.io//apple-touch-icon.png">
+
+<meta name="description" content=""/>
+
+
+
+<title>
+    
+    区块链相关定义和概念 | Ween&#39;s Blog
+    
+</title>
+
+<link rel="canonical" href="https://weenable.github.io/posts/web3/%E5%8C%BA%E5%9D%97%E9%93%BE%E7%9B%B8%E5%85%B3%E5%AE%9A%E4%B9%89%E5%92%8C%E6%A6%82%E5%BF%B5/"/>
+
+<meta property="og:url" content="https://weenable.github.io/posts/web3/%E5%8C%BA%E5%9D%97%E9%93%BE%E7%9B%B8%E5%85%B3%E5%AE%9A%E4%B9%89%E5%92%8C%E6%A6%82%E5%BF%B5/">
+  <meta property="og:site_name" content="Ween&#39;s Blog">
+  <meta property="og:title" content="区块链相关定义和概念">
+  <meta property="og:description" content="1.区块链基本架构 # 数据层：描述区块链物理结构 网络层：提供节点间数据通信和数据校验 共识层：提供节点间达成共识的算法 激励层：提供激励措施 合约层：提供可编程能力 应用层：提供封装区块链技术的应用 2.拜占庭问题和拜占庭容错 # 拜占庭问题：存在少数不良节点场景下的一致性达成问题 拜占庭算法（BFT）：N为节点总数，F为其中不良节点数，当N&gt;=3F&#43;1时问题才有解 实用拜占庭算法（PBFT）：是第一个广泛采用的BFT算法，采用密码学技术（RSA签名算法、信息摘要算法、信息验证算法）
+3.区块链常见共识算法 # 工作量证明POW：通过耗费电力阻止不良行为 权益证明POS：代币质押者为验证者，通过绑定验证者和网络的利益来阻止不良行为 委托权益证明DPOS：代币持有者对交易验证者进行投票 4.身份认证 # 摘要算法&#43;签名算法 A：对交易信息进行Hash取摘要，通过私钥加密生成签名 广播：广播交易信息&#43;A公钥&#43;A生成的签名 B：对交易信息Hash取摘要，通过A公钥解密签名得到摘要，比对两个摘要
+5.双重支付问题 # 区块链存在51%攻击的问题，依靠强大的算力篡改区块进行强行分叉。 可以通过等待若干新块产生后再进行正式交付，来降低51%攻击的可能性
+6.闪电网络 # 比特币交易性能差（全网tps=7左右），同时还需要等待6个块的可行确认（抵御双重支付攻击），导致一笔交易可能要1小时的最终确认
+RSMC（序列到期可撤销合约）：链下通道&#43;链上更新&#43;违约惩罚 HTLC（哈希时间锁定合约）：通过合约双方约定接收方提供一个哈希值，在一定时间内有人能提出一个字符串使得哈希后的值与已知值匹配，则转账方将这笔钱转给回答正确的人 7.软分叉 # 定义 # 在区块链协议中，软分叉（Soft Fork）是对现有协议做向后兼容的更改。软分叉的特点是，新规则是现有规则的一个子集，也就是说，遵循旧规则的节点仍然可以理解并处理遵循新规则的区块和交易，但不能创建不符合新规则的区块和交易
+软分叉状态 # 软分叉状态指的是区块链网络中软分叉的激活和部署状态。通常，软分叉的激活分为以下几个阶段
+定义阶段（Defined）： 软分叉的代码已经被写入客户端软件，但还没有开始正式监控。 投票阶段（Started）： 节点开始在区块头中嵌入信号（通过特定的区块版本位）来表示它们是否支持该软分叉。 矿工通过在区块头中设置特定的比特位来投票支持或反对这个软分叉。 锁定阶段（Locked In）： 如果在一个特定的周期内（例如 2016 个区块）达到了一定的支持率（通常是 95%），软分叉就会进入锁定阶段。 在锁定阶段结束后，软分叉将会被激活。 激活阶段（Active）： 软分叉的规则开始正式生效，所有新创建的区块和交易都必须遵循这些新规则。 软分叉状态表示区块链网络中软分叉的不同阶段，包括定义、投票、锁定和激活阶段。检查软分叉状态有助于节点决定如何与其他节点进行交互，以确保遵循最新的协议规则，从而提高网络的安全性和数据一致性。例如，在 SegWit 激活后，节点需要与支持 SegWit 的对等节点进行同步，以确保能够完整地验证所有区块链数据">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-02-28T18:59:06+08:00">
+    <meta property="article:modified_time" content="2025-02-28T18:59:06+08:00">
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/assets/combined.min.db1f6bdda2e5a4d5c9a316aa295aaeba691b0d6154397bbb6787fea95b273e6a.css" media="all">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+<body class="auto">
+
+  <div class="content">
+    <header>
+      
+
+<div class="header">
+
+    
+
+    <h1 class="header-title">
+        <a href="https://weenable.github.io/">Ween&#39;s Blog</a>
+    </h1>
+
+    <div class="flex">
+        
+
+        
+        
+      
+        <p class="small ">
+            <a href="/" >
+                /home
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/posts" >
+                /posts
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/categories" >
+                /categories
+            </a>
+        </p>
+        
+        
+    </div>
+
+    
+
+</div>
+
+    </header>
+
+    <main class="main">
+      
+
+
+
+
+
+
+
+<div  class="autonumber" >
+
+  <div class="single-intro-container">
+
+    
+
+    <h1 class="single-title">区块链相关定义和概念</h1>
+    
+
+    
+
+    <p class="single-readtime">
+      
+      
+      
+      <time datetime="2025-02-28T18:59:06&#43;08:00">February 28, 2025</time>
+      
+
+      
+      &nbsp; · &nbsp;
+      1 min read
+      
+    </p>
+
+  </div>
+
+  
+
+  
+
+  
+  <aside class="toc">
+    <p><strong>Table of contents</strong></p>
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </aside>
+  
+
+  
+
+  <div class="single-content">
+    <h4 class="heading" id="1区块链基本架构">
+  1.区块链基本架构
+  <a class="anchor" href="#1%e5%8c%ba%e5%9d%97%e9%93%be%e5%9f%ba%e6%9c%ac%e6%9e%b6%e6%9e%84">#</a>
+</h4>
+<ul>
+<li>数据层：描述区块链物理结构</li>
+<li>网络层：提供节点间数据通信和数据校验</li>
+<li>共识层：提供节点间达成共识的算法</li>
+<li>激励层：提供激励措施</li>
+<li>合约层：提供可编程能力</li>
+<li>应用层：提供封装区块链技术的应用</li>
+</ul>
+<h4 class="heading" id="2拜占庭问题和拜占庭容错">
+  2.拜占庭问题和拜占庭容错
+  <a class="anchor" href="#2%e6%8b%9c%e5%8d%a0%e5%ba%ad%e9%97%ae%e9%a2%98%e5%92%8c%e6%8b%9c%e5%8d%a0%e5%ba%ad%e5%ae%b9%e9%94%99">#</a>
+</h4>
+<p>拜占庭问题：存在少数不良节点场景下的一致性达成问题
+拜占庭算法（BFT）：N为节点总数，F为其中不良节点数，当N&gt;=3F+1时问题才有解
+实用拜占庭算法（PBFT）：是第一个广泛采用的BFT算法，采用密码学技术（RSA签名算法、信息摘要算法、信息验证算法）</p>
+<h4 class="heading" id="3区块链常见共识算法">
+  3.区块链常见共识算法
+  <a class="anchor" href="#3%e5%8c%ba%e5%9d%97%e9%93%be%e5%b8%b8%e8%a7%81%e5%85%b1%e8%af%86%e7%ae%97%e6%b3%95">#</a>
+</h4>
+<ul>
+<li>工作量证明POW：通过耗费电力阻止不良行为</li>
+<li>权益证明POS：代币质押者为验证者，通过绑定验证者和网络的利益来阻止不良行为</li>
+<li>委托权益证明DPOS：代币持有者对交易验证者进行投票</li>
+</ul>
+<h4 class="heading" id="4身份认证">
+  4.身份认证
+  <a class="anchor" href="#4%e8%ba%ab%e4%bb%bd%e8%ae%a4%e8%af%81">#</a>
+</h4>
+<p>摘要算法+签名算法
+A：对交易信息进行Hash取摘要，通过私钥加密生成签名
+广播：广播交易信息+A公钥+A生成的签名
+B：对交易信息Hash取摘要，通过A公钥解密签名得到摘要，比对两个摘要</p>
+<h4 class="heading" id="5双重支付问题">
+  5.双重支付问题
+  <a class="anchor" href="#5%e5%8f%8c%e9%87%8d%e6%94%af%e4%bb%98%e9%97%ae%e9%a2%98">#</a>
+</h4>
+<p>区块链存在51%攻击的问题，依靠强大的算力篡改区块进行强行分叉。
+可以通过等待若干新块产生后再进行正式交付，来降低51%攻击的可能性</p>
+<h4 class="heading" id="6闪电网络">
+  6.闪电网络
+  <a class="anchor" href="#6%e9%97%aa%e7%94%b5%e7%bd%91%e7%bb%9c">#</a>
+</h4>
+<p>比特币交易性能差（全网tps=7左右），同时还需要等待6个块的可行确认（抵御双重支付攻击），导致一笔交易可能要1小时的最终确认</p>
+<ul>
+<li>RSMC（序列到期可撤销合约）：链下通道+链上更新+违约惩罚</li>
+<li>HTLC（哈希时间锁定合约）：通过合约双方约定接收方提供一个哈希值，在一定时间内有人能提出一个字符串使得哈希后的值与已知值匹配，则转账方将这笔钱转给回答正确的人</li>
+</ul>
+<h4 class="heading" id="7软分叉">
+  7.软分叉
+  <a class="anchor" href="#7%e8%bd%af%e5%88%86%e5%8f%89">#</a>
+</h4>
+<h5 class="heading" id="定义">
+  定义
+  <a class="anchor" href="#%e5%ae%9a%e4%b9%89">#</a>
+</h5>
+<p>在区块链协议中，软分叉（Soft Fork）是对现有协议做向后兼容的更改。软分叉的特点是，新规则是现有规则的一个子集，也就是说，遵循旧规则的节点仍然可以理解并处理遵循新规则的区块和交易，但不能创建不符合新规则的区块和交易</p>
+<h5 class="heading" id="软分叉状态">
+  软分叉状态
+  <a class="anchor" href="#%e8%bd%af%e5%88%86%e5%8f%89%e7%8a%b6%e6%80%81">#</a>
+</h5>
+<p>软分叉状态指的是区块链网络中软分叉的激活和部署状态。通常，软分叉的激活分为以下几个阶段</p>
+<ol>
+<li>定义阶段（Defined）：
+<ul>
+<li>软分叉的代码已经被写入客户端软件，但还没有开始正式监控。</li>
+</ul>
+</li>
+<li>投票阶段（Started）：
+<ul>
+<li>节点开始在区块头中嵌入信号（通过特定的区块版本位）来表示它们是否支持该软分叉。</li>
+<li>矿工通过在区块头中设置特定的比特位来投票支持或反对这个软分叉。</li>
+</ul>
+</li>
+<li>锁定阶段（Locked In）：
+<ul>
+<li>如果在一个特定的周期内（例如 2016 个区块）达到了一定的支持率（通常是 95%），软分叉就会进入锁定阶段。</li>
+<li>在锁定阶段结束后，软分叉将会被激活。</li>
+</ul>
+</li>
+<li>激活阶段（Active）：
+<ul>
+<li>软分叉的规则开始正式生效，所有新创建的区块和交易都必须遵循这些新规则。</li>
+</ul>
+</li>
+</ol>
+<p>软分叉状态表示区块链网络中软分叉的不同阶段，包括定义、投票、锁定和激活阶段。检查软分叉状态有助于节点决定如何与其他节点进行交互，以确保遵循最新的协议规则，从而提高网络的安全性和数据一致性。例如，在 SegWit 激活后，节点需要与支持 SegWit 的对等节点进行同步，以确保能够完整地验证所有区块链数据</p>
+
+    
+  </div>
+
+  
+
+  
+
+  
+  
+
+<div class="single-pagination">
+    <hr />
+
+    <div class="flex">
+
+        <div class="single-pagination-prev">
+            
+            <div class="single-pagination-container-prev">
+                <div class="single-pagination-text">←</div>
+                <div class="single-pagination-text">
+                    <a href="/posts/golang/go%E5%86%85%E5%AD%98%E6%B1%A0%E5%AE%9E%E7%8E%B0/">
+                        go内存池实现
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="single-pagination-next">
+            
+            <div class="single-pagination-container-next">
+                <div class="single-pagination-text">
+                    <a href="/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E7%AE%97%E6%B3%95%E5%AE%9E%E7%8E%B0/">
+                        布隆过滤器算法实现
+                    </a>
+                </div>
+                <div class="single-pagination-text">→</div>
+            </div>
+            
+        </div>
+
+    </div>
+
+    <hr />
+</div>
+
+
+
+  
+
+  
+
+  
+  <div class="back-to-top">
+    <a href="#top">
+      back to top
+    </a>
+  </div>
+  
+
+</div>
+
+
+    </main>
+  </div>
+
+  <footer>
+    
+
+    
+    <p>Powered by
+        <a href="https://gohugo.io/">Hugo</a>
+        and
+        <a href="https://github.com/tomfran/typo">tomfran/typo</a>
+    </p>
+    
+    
+    
+
+
+  </footer>
+
+  
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body);"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false }
+      ]
+    });
+  });
+</script>
+  
+
+</body>
+
+<script src="/js/theme-switch.js"></script>
+<script defer src="/js/copy-code.js"></script>
+</html>

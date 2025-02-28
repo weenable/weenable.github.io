@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en-us"
+  dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+
+<link rel="icon" type="image/ico" href="https://weenable.github.io//favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://weenable.github.io//favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://weenable.github.io//favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://weenable.github.io//android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://weenable.github.io//apple-touch-icon.png">
+
+<meta name="description" content=""/>
+
+
+
+<title>
+    
+    在线支付系统设计 | Ween&#39;s Blog
+    
+</title>
+
+<link rel="canonical" href="https://weenable.github.io/posts/%E6%9E%B6%E6%9E%84/%E5%9C%A8%E7%BA%BF%E6%94%AF%E4%BB%98%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/"/>
+
+<meta property="og:url" content="https://weenable.github.io/posts/%E6%9E%B6%E6%9E%84/%E5%9C%A8%E7%BA%BF%E6%94%AF%E4%BB%98%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/">
+  <meta property="og:site_name" content="Ween&#39;s Blog">
+  <meta property="og:title" content="在线支付系统设计">
+  <meta property="og:description" content="支付系统基本概念 # 简单支付流程 # 最简单的支付流程只展示了正向支付的流程，当然还有退款流程、撤销流程等 简单清结算流程 # 支付系统和上游（如银行）是机构对机构的关系，通常使用清算概念，并且金融机构之间大部份情况下会有独立的清算机构做清算任务 支付系统和商户之间通常使用结算概念，由支付系统直接大款给商户 清算主要是把钱算清楚，结算主要是真实打款 简单本对本收单流程 # 所谓本对本收单，就是指商户的商品标价币种、向支付系统下单的币种、用户支付的币种、商户结算币种都是同一个币种，不涉及到外汇交易 简单跨境收单流程 # 跨境收单就是结算给商户的币种和用户支付的币种不一样，需要经过外汇机构换汇 在扣款EUR之后，支付系统会调用外汇机构进行锁定汇率（HA） 在银行清算之后，支付平台再调用外汇机构进行换汇（TA） 最后支付系统结算给商户 整个时序图如下：
+概要设计 # 简单产品架构图 # 简单系统架构图 # 较简单的一个本队本交易的支付系统架构 复杂的支付系统可能还有外汇等子系统，甚至一个子系统可能会分为多个应用来部署，比如收单结算子系统拆分为收单、结算应用 复杂系统架构 # 比较完整的一个系统架构，里面划分了比较清楚的子域或模块 系统依赖图 # 红色链路为主要支付链路 常见术语 # 通用 # 支付服务提供商：PSP，Payment Service Provider。为商户提供支付解决方案的公司。银行、第三方支付公司都属于支付服务提供商 收单机构：Acuquiring Institution/Acquirer。负责处理和清算商户交易的金融机构或支付服务提供商（PSP） 拍照：License。由监管机构或政府授予的官方许可，允许持牌者在特定的法律框架和规定内经营某种金融服务或支付业务。支付相关的牌照主要有： 银行牌照：允许公司提供传统银行服务，例如接受存款、提供贷款等 支付机构牌照：允许公司提供支付服务，如支付处理、资金转账、电子钱包服务等 电子货币机构牌照：允许公司发行和管理电子货币，如预付卡、电子钱包中的资金等 PA牌照：Payment Account，也就是储值牌照，用户可以先充值，后使用余额进行支付 PG牌照：Payment Gateway。也就是支付网关牌照，只能调用外部渠道支付，不能有余额 展业：在指定的区域开展业务。通常和牌照申请、监管合规等放在一起 收单产品：支付服务提供商为商户提供的支付服务 担保交易：用户先把钱给到支付平台，用户确认收货再给钱到商家 即时到帐：付款资金直接转移到收款账户，不需要用户二次确认 资金产品：通常指与处理客户资金流动相关的服务，包括充值、转账、提现、代发等功能 代发：公司或组织通过在线支付系统将资金直接转入个人账户。有代发到余额和代发到卡 退款：Refund，一般指支付第二天的逆向行为，有部份退款和全额退款 撤销：Cancel，一般指支付当天的逆向行为 冲正：与撤销类似。来源于POS机时代，在交易发生当天用户申请退货退款时，或POS机支付超时的情况下，操作员发起一笔冲正，收单机构如果已经扣款就会退回 T日/T&#43;N日：T日：交易实际发生的日期，T&#43;N：从交易日发生之后N个工作日。比如T&#43;1清算，就是指交易完成后，第二天进行清算 风控：交易的风险控制，欺诈检测、信用评估、合规检查 外汇 # 锁汇：锁定汇率。在电商场景下，电商平台不愿意承担汇损风险，就直接在支付成功后，使用支付金额向外汇机构锁定一个固定汇率 换汇：实际购汇。在电商场景下，电商平台不愿意承担汇损风险，在支付渠道清算后，使用原锁汇时的汇率，正式向外汇机构购汇，完成交割 即期：按当前市场汇率立即交换两种货币。一般是2个工作日内交割。一般是场内交易 远期：双方约定以当前确定汇率（远期汇率）在将来某天交换货币。一般是场外交易 掉期：双方先通过即期交易，然后约定在远期时再换回来。一般是场外交易 结汇入境：以入境中国为例。先在境外兑换成离岸人民币，再结算到境内银行账户或金融机构账户 入境结汇：以入境中国为例。先以外币入境，在境内再兑换成人民币 资金账务 # 会计日：标识一笔交易在会计层面的日期。交易需要跨多个子系统，完成一笔交易的时间在不同子系统中是不一样的。与自然日可能有差异，特别是交易在零点附近的时候，所以统一使用会计日来明确交易应该计入哪一天。有可能一笔交易发生在2023.12.23这天，但是交易记录在2023.12.24这个会计日内 日切：会计日切换到下一天。在这个点之后，所有的交易会被记录到下一个会计日。日切之后，通常需要进行批处理，包括交易清算、账户余额更新、试算平衡等 记账：交易记录到会计科目中 复试记账：一种会计准则，要求每笔交易都要有两个或以上的账目变动来记录，使得借方和贷方的总金额相等 头寸：通俗地说，就是余额情况。头寸不够，就是余额不够 流动性调拨：在多个银行备付金账户中转账，以确保符合业务需求。比如因为一些特殊原因，所有用户当天通过CMB渠道只支付了400万，但是当天所有用户合计要在CMB渠道退款500万 结算：收单机构把交易资金结转给商户。通常有结算到余额到结算到银行卡 清算：机构之间进行交易资金的转移。通常会由专门的清算机构负责清算。本质和结算是一样的，只是结算通常用在收单机构与商户之间，清算用在持牌的金融机构之间 轧差：清分过程中把当天应收和应付金额相互抵消，最终只有净额需要结算或清算，注意这个字读（gá） 净清算额：轧差之后，各参与方需要转移的资金总额 对账：比对交易双方的记账或资金。比如和渠道的对账。通常有明细对账和资金对账。前者就是对交易数据，按笔核对，后者对真实打款情况，当天交易100万，是否真实打款100万 长款/短款：对账过程中发现实际的金额高于或低于账面金额 计收费：支付平台针对手续费的记录和汇总。一般有商户计费和渠道计费">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-02-28T19:14:00+08:00">
+    <meta property="article:modified_time" content="2025-02-28T19:14:00+08:00">
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/assets/combined.min.db1f6bdda2e5a4d5c9a316aa295aaeba691b0d6154397bbb6787fea95b273e6a.css" media="all">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+<body class="auto">
+
+  <div class="content">
+    <header>
+      
+
+<div class="header">
+
+    
+
+    <h1 class="header-title">
+        <a href="https://weenable.github.io/">Ween&#39;s Blog</a>
+    </h1>
+
+    <div class="flex">
+        
+
+        
+        
+      
+        <p class="small ">
+            <a href="/" >
+                /home
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/posts" >
+                /posts
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/categories" >
+                /categories
+            </a>
+        </p>
+        
+        
+    </div>
+
+    
+
+</div>
+
+    </header>
+
+    <main class="main">
+      
+
+
+
+
+
+
+
+<div  class="autonumber" >
+
+  <div class="single-intro-container">
+
+    
+
+    <h1 class="single-title">在线支付系统设计</h1>
+    
+
+    
+
+    <p class="single-readtime">
+      
+      
+      
+      <time datetime="2025-02-28T19:14:00&#43;08:00">February 28, 2025</time>
+      
+
+      
+      &nbsp; · &nbsp;
+      1 min read
+      
+    </p>
+
+  </div>
+
+  
+
+  
+
+  
+  <aside class="toc">
+    <p><strong>Table of contents</strong></p>
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#支付系统基本概念">支付系统基本概念</a></li>
+        <li><a href="#概要设计">概要设计</a></li>
+        <li><a href="#常见术语">常见术语</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </aside>
+  
+
+  
+
+  <div class="single-content">
+    <h3 class="heading" id="支付系统基本概念">
+  支付系统基本概念
+  <a class="anchor" href="#%e6%94%af%e4%bb%98%e7%b3%bb%e7%bb%9f%e5%9f%ba%e6%9c%ac%e6%a6%82%e5%bf%b5">#</a>
+</h3>
+<h4 class="heading" id="简单支付流程">
+  简单支付流程
+  <a class="anchor" href="#%e7%ae%80%e5%8d%95%e6%94%af%e4%bb%98%e6%b5%81%e7%a8%8b">#</a>
+</h4>
+<p>最简单的支付流程只展示了正向支付的流程，当然还有退款流程、撤销流程等
+
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-20252281435321.png" src="images/%E5%9C%A8%E7%BA%BF%E6%94%AF%E4%BB%98%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/image-20252281435321.png" >
+    </div>
+
+    
+</figure>
+</p>
+<h4 class="heading" id="简单清结算流程">
+  简单清结算流程
+  <a class="anchor" href="#%e7%ae%80%e5%8d%95%e6%b8%85%e7%bb%93%e7%ae%97%e6%b5%81%e7%a8%8b">#</a>
+</h4>
+<ol>
+<li>支付系统和上游（如银行）是机构对机构的关系，通常使用清算概念，并且金融机构之间大部份情况下会有独立的清算机构做清算任务</li>
+<li>支付系统和商户之间通常使用结算概念，由支付系统直接大款给商户</li>
+<li>清算主要是把钱算清楚，结算主要是真实打款</li>
+</ol>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-20252281457938.png" src="images/%E5%9C%A8%E7%BA%BF%E6%94%AF%E4%BB%98%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/image-20252281457938.png" >
+    </div>
+
+    
+</figure>
+</p>
+<h4 class="heading" id="简单本对本收单流程">
+  简单本对本收单流程
+  <a class="anchor" href="#%e7%ae%80%e5%8d%95%e6%9c%ac%e5%af%b9%e6%9c%ac%e6%94%b6%e5%8d%95%e6%b5%81%e7%a8%8b">#</a>
+</h4>
+<ol>
+<li>所谓本对本收单，就是指商户的商品标价币种、向支付系统下单的币种、用户支付的币种、商户结算币种都是同一个币种，不涉及到外汇交易</li>
+</ol>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-20252281522725.png" src="images/%E5%9C%A8%E7%BA%BF%E6%94%AF%E4%BB%98%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/image-20252281522725.png" >
+    </div>
+
+    
+</figure>
+</p>
+<h4 class="heading" id="简单跨境收单流程">
+  简单跨境收单流程
+  <a class="anchor" href="#%e7%ae%80%e5%8d%95%e8%b7%a8%e5%a2%83%e6%94%b6%e5%8d%95%e6%b5%81%e7%a8%8b">#</a>
+</h4>
+<ol>
+<li>跨境收单就是结算给商户的币种和用户支付的币种不一样，需要经过外汇机构换汇</li>
+<li>在扣款EUR之后，支付系统会调用外汇机构进行锁定汇率（HA）</li>
+<li>在银行清算之后，支付平台再调用外汇机构进行换汇（TA）</li>
+<li>最后支付系统结算给商户</li>
+</ol>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-20252281556354.png" src="images/%E5%9C%A8%E7%BA%BF%E6%94%AF%E4%BB%98%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/image-20252281556354.png" >
+    </div>
+
+    
+</figure>
+</p>
+<p>整个时序图如下：</p>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-20252281613881.png" src="images/%E5%9C%A8%E7%BA%BF%E6%94%AF%E4%BB%98%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/image-20252281613881.png" >
+    </div>
+
+    
+</figure>
+</p>
+<h3 class="heading" id="概要设计">
+  概要设计
+  <a class="anchor" href="#%e6%a6%82%e8%a6%81%e8%ae%be%e8%ae%a1">#</a>
+</h3>
+<h4 class="heading" id="简单产品架构图">
+  简单产品架构图
+  <a class="anchor" href="#%e7%ae%80%e5%8d%95%e4%ba%a7%e5%93%81%e6%9e%b6%e6%9e%84%e5%9b%be">#</a>
+</h4>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-20252281633583.png" src="images/%E5%9C%A8%E7%BA%BF%E6%94%AF%E4%BB%98%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/image-20252281633583.png" >
+    </div>
+
+    
+</figure>
+</p>
+<h4 class="heading" id="简单系统架构图">
+  简单系统架构图
+  <a class="anchor" href="#%e7%ae%80%e5%8d%95%e7%b3%bb%e7%bb%9f%e6%9e%b6%e6%9e%84%e5%9b%be">#</a>
+</h4>
+<ol>
+<li>较简单的一个本队本交易的支付系统架构</li>
+<li>复杂的支付系统可能还有外汇等子系统，甚至一个子系统可能会分为多个应用来部署，比如收单结算子系统拆分为收单、结算应用</li>
+</ol>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-20252281651782.png" src="images/%E5%9C%A8%E7%BA%BF%E6%94%AF%E4%BB%98%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/image-20252281651782.png" >
+    </div>
+
+    
+</figure>
+</p>
+<h4 class="heading" id="复杂系统架构">
+  复杂系统架构
+  <a class="anchor" href="#%e5%a4%8d%e6%9d%82%e7%b3%bb%e7%bb%9f%e6%9e%b6%e6%9e%84">#</a>
+</h4>
+<ol>
+<li>比较完整的一个系统架构，里面划分了比较清楚的子域或模块</li>
+</ol>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-20252281711947.png" src="images/%E5%9C%A8%E7%BA%BF%E6%94%AF%E4%BB%98%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/image-20252281711947.png" >
+    </div>
+
+    
+</figure>
+</p>
+<h4 class="heading" id="系统依赖图">
+  系统依赖图
+  <a class="anchor" href="#%e7%b3%bb%e7%bb%9f%e4%be%9d%e8%b5%96%e5%9b%be">#</a>
+</h4>
+<ol>
+<li>红色链路为主要支付链路</li>
+</ol>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-20252281731832.png" src="images/%E5%9C%A8%E7%BA%BF%E6%94%AF%E4%BB%98%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/image-20252281731832.png" >
+    </div>
+
+    
+</figure>
+</p>
+<h3 class="heading" id="常见术语">
+  常见术语
+  <a class="anchor" href="#%e5%b8%b8%e8%a7%81%e6%9c%af%e8%af%ad">#</a>
+</h3>
+<h4 class="heading" id="通用">
+  通用
+  <a class="anchor" href="#%e9%80%9a%e7%94%a8">#</a>
+</h4>
+<ul>
+<li>支付服务提供商：PSP，Payment Service Provider。为商户提供支付解决方案的公司。银行、第三方支付公司都属于支付服务提供商</li>
+<li>收单机构：Acuquiring Institution/Acquirer。负责处理和清算商户交易的金融机构或支付服务提供商（PSP）</li>
+<li>拍照：License。由监管机构或政府授予的官方许可，允许持牌者在特定的法律框架和规定内经营某种金融服务或支付业务。支付相关的牌照主要有：
+<ul>
+<li>银行牌照：允许公司提供传统银行服务，例如接受存款、提供贷款等</li>
+<li>支付机构牌照：允许公司提供支付服务，如支付处理、资金转账、电子钱包服务等</li>
+<li>电子货币机构牌照：允许公司发行和管理电子货币，如预付卡、电子钱包中的资金等</li>
+<li>PA牌照：Payment Account，也就是储值牌照，用户可以先充值，后使用余额进行支付</li>
+<li>PG牌照：Payment Gateway。也就是支付网关牌照，只能调用外部渠道支付，不能有余额</li>
+</ul>
+</li>
+<li>展业：在指定的区域开展业务。通常和牌照申请、监管合规等放在一起</li>
+<li>收单产品：支付服务提供商为商户提供的支付服务</li>
+<li>担保交易：用户先把钱给到支付平台，用户确认收货再给钱到商家</li>
+<li>即时到帐：付款资金直接转移到收款账户，不需要用户二次确认</li>
+<li>资金产品：通常指与处理客户资金流动相关的服务，包括充值、转账、提现、代发等功能</li>
+<li>代发：公司或组织通过在线支付系统将资金直接转入个人账户。有代发到余额和代发到卡</li>
+<li>退款：Refund，一般指支付第二天的逆向行为，有部份退款和全额退款</li>
+<li>撤销：Cancel，一般指支付当天的逆向行为</li>
+<li>冲正：与撤销类似。来源于POS机时代，在交易发生当天用户申请退货退款时，或POS机支付超时的情况下，操作员发起一笔冲正，收单机构如果已经扣款就会退回</li>
+<li>T日/T+N日：T日：交易实际发生的日期，T+N：从交易日发生之后N个工作日。比如T+1清算，就是指交易完成后，第二天进行清算</li>
+<li>风控：交易的风险控制，欺诈检测、信用评估、合规检查</li>
+</ul>
+<h4 class="heading" id="外汇">
+  外汇
+  <a class="anchor" href="#%e5%a4%96%e6%b1%87">#</a>
+</h4>
+<ul>
+<li>锁汇：锁定汇率。在电商场景下，电商平台不愿意承担汇损风险，就直接在支付成功后，使用支付金额向外汇机构锁定一个固定汇率</li>
+<li>换汇：实际购汇。在电商场景下，电商平台不愿意承担汇损风险，在支付渠道清算后，使用原锁汇时的汇率，正式向外汇机构购汇，完成交割</li>
+<li>即期：按当前市场汇率立即交换两种货币。一般是2个工作日内交割。一般是场内交易</li>
+<li>远期：双方约定以当前确定汇率（远期汇率）在将来某天交换货币。一般是场外交易</li>
+<li>掉期：双方先通过即期交易，然后约定在远期时再换回来。一般是场外交易</li>
+<li>结汇入境：以入境中国为例。先在境外兑换成离岸人民币，再结算到境内银行账户或金融机构账户</li>
+<li>入境结汇：以入境中国为例。先以外币入境，在境内再兑换成人民币</li>
+</ul>
+<h4 class="heading" id="资金账务">
+  资金账务
+  <a class="anchor" href="#%e8%b5%84%e9%87%91%e8%b4%a6%e5%8a%a1">#</a>
+</h4>
+<ul>
+<li>会计日：标识一笔交易在会计层面的日期。交易需要跨多个子系统，完成一笔交易的时间在不同子系统中是不一样的。与自然日可能有差异，特别是交易在零点附近的时候，所以统一使用会计日来明确交易应该计入哪一天。有可能一笔交易发生在2023.12.23这天，但是交易记录在2023.12.24这个会计日内</li>
+<li>日切：会计日切换到下一天。在这个点之后，所有的交易会被记录到下一个会计日。日切之后，通常需要进行批处理，包括交易清算、账户余额更新、试算平衡等</li>
+<li>记账：交易记录到会计科目中</li>
+<li>复试记账：一种会计准则，要求每笔交易都要有两个或以上的账目变动来记录，使得借方和贷方的总金额相等</li>
+<li>头寸：通俗地说，就是余额情况。头寸不够，就是余额不够</li>
+<li>流动性调拨：在多个银行备付金账户中转账，以确保符合业务需求。比如因为一些特殊原因，所有用户当天通过CMB渠道只支付了400万，但是当天所有用户合计要在CMB渠道退款500万</li>
+<li>结算：收单机构把交易资金结转给商户。通常有结算到余额到结算到银行卡</li>
+<li>清算：机构之间进行交易资金的转移。通常会由专门的清算机构负责清算。本质和结算是一样的，只是结算通常用在收单机构与商户之间，清算用在持牌的金融机构之间</li>
+<li>轧差：清分过程中把当天应收和应付金额相互抵消，最终只有净额需要结算或清算，注意这个字读（gá）</li>
+<li>净清算额：轧差之后，各参与方需要转移的资金总额</li>
+<li>对账：比对交易双方的记账或资金。比如和渠道的对账。通常有明细对账和资金对账。前者就是对交易数据，按笔核对，后者对真实打款情况，当天交易100万，是否真实打款100万</li>
+<li>长款/短款：对账过程中发现实际的金额高于或低于账面金额</li>
+<li>计收费：支付平台针对手续费的记录和汇总。一般有商户计费和渠道计费</li>
+</ul>
+
+    
+  </div>
+
+  
+
+  
+
+  
+  
+
+<div class="single-pagination">
+    <hr />
+
+    <div class="flex">
+
+        <div class="single-pagination-prev">
+            
+            <div class="single-pagination-container-prev">
+                <div class="single-pagination-text">←</div>
+                <div class="single-pagination-text">
+                    <a href="/posts/game/%E7%BD%91%E7%BB%9C%E6%B8%B8%E6%88%8F%E5%90%8C%E6%AD%A5%E6%9C%BA%E5%88%B6/">
+                        网络游戏同步机制
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="single-pagination-next">
+            
+            <div class="single-pagination-container-next">
+                <div class="single-pagination-text">
+                    <a href="/posts/%E6%9E%B6%E6%9E%84/%E5%88%86%E5%B8%83%E5%BC%8F%E8%84%91%E8%A3%82/">
+                        分布式脑裂
+                    </a>
+                </div>
+                <div class="single-pagination-text">→</div>
+            </div>
+            
+        </div>
+
+    </div>
+
+    <hr />
+</div>
+
+
+
+  
+
+  
+
+  
+  <div class="back-to-top">
+    <a href="#top">
+      back to top
+    </a>
+  </div>
+  
+
+</div>
+
+
+    </main>
+  </div>
+
+  <footer>
+    
+
+    
+    <p>Powered by
+        <a href="https://gohugo.io/">Hugo</a>
+        and
+        <a href="https://github.com/tomfran/typo">tomfran/typo</a>
+    </p>
+    
+    
+    
+
+
+  </footer>
+
+  
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body);"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false }
+      ]
+    });
+  });
+</script>
+  
+
+</body>
+
+<script src="/js/theme-switch.js"></script>
+<script defer src="/js/copy-code.js"></script>
+</html>

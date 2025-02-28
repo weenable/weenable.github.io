@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en-us"
+  dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+
+<link rel="icon" type="image/ico" href="https://weenable.github.io//favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://weenable.github.io//favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://weenable.github.io//favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://weenable.github.io//android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://weenable.github.io//apple-touch-icon.png">
+
+<link rel="alternate" type="application/rss+xml" href="https://weenable.github.io/categories/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/index.xml" title="Ween's Blog">
+<meta name="description" content=""/>
+
+
+
+<title>
+    
+    算法数据结构 | Ween&#39;s Blog
+    
+</title>
+
+<link rel="canonical" href="https://weenable.github.io/categories/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
+
+<meta property="og:url" content="https://weenable.github.io/categories/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">
+  <meta property="og:site_name" content="Ween&#39;s Blog">
+  <meta property="og:title" content="算法数据结构">
+  <meta property="og:description" content="Ween&#39;s Blog">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="website">
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/assets/combined.min.db1f6bdda2e5a4d5c9a316aa295aaeba691b0d6154397bbb6787fea95b273e6a.css" media="all">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+<body class="auto">
+
+  <div class="content">
+    <header>
+      
+
+<div class="header">
+
+    
+
+    <h1 class="header-title">
+        <a href="https://weenable.github.io/">Ween&#39;s Blog</a>
+    </h1>
+
+    <div class="flex">
+        
+
+        
+        
+      
+        <p class="small ">
+            <a href="/" >
+                /home
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/posts" >
+                /posts
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/categories" >
+                /categories
+            </a>
+        </p>
+        
+        
+    </div>
+
+    
+
+</div>
+
+    </header>
+
+    <main class="main">
+      
+
+<div class="list-container">
+
+    
+
+    <h1>算法数据结构</h1>
+    
+
+    
+
+    
+    
+    
+    
+
+    
+
+    
+
+    
+    <div class="post-line">
+
+    
+    
+    
+    
+
+    <p class="line-date">2025-02-28 </p>
+
+    <div>
+        <p class="line-title">
+            <a href="/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E6%B1%87%E6%80%BB/">
+                排序算法汇总
+            </a>
+        </p>
+
+        
+        <p class="line-summary"> <h6 class="heading" id="冒泡排序n2">
+  冒泡排序n^2
+  <a class="anchor" href="#%e5%86%92%e6%b3%a1%e6%8e%92%e5%ba%8fn2">#</a>
+</h6>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">bubbleSort</span>(list []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>	done := <span style="font-weight:bold;text-decoration:underline">false</span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> i := <span style="font-weight:bold;font-style:italic">len</span>(list) - 1; i &gt;= 0; i-- {
+</span></span><span style="display:flex;"><span>		done = <span style="font-weight:bold;text-decoration:underline">true</span>
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">for</span> j := 0; j &lt; i; i++ {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> list[j] &gt; list[j+1] {
+</span></span><span style="display:flex;"><span>				list[j], list[j+1] = list[j], list[j+1]
+</span></span><span style="display:flex;"><span>				done = <span style="font-weight:bold;text-decoration:underline">false</span>
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">if</span> done {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">break</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> list
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 class="heading" id="选择排序n2">
+  选择排序n^2
+  <a class="anchor" href="#%e9%80%89%e6%8b%a9%e6%8e%92%e5%ba%8fn2">#</a>
+</h6>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">selectSort</span>(list []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> i := <span style="font-weight:bold;font-style:italic">len</span>(list) - 1; i &gt;= 0; i-- {
+</span></span><span style="display:flex;"><span>		maxIdx := 0
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">for</span> j := 1; j &lt;= i; i++ {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> list[j] &gt; list[maxIdx] {
+</span></span><span style="display:flex;"><span>				maxIdx = j
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		list[maxIdx], list[i] = list[i], list[maxIdx]
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> list
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 class="heading" id="插入排序n2">
+  插入排序n^2
+  <a class="anchor" href="#%e6%8f%92%e5%85%a5%e6%8e%92%e5%ba%8fn2">#</a>
+</h6>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">insertSort</span>(list []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> i := 0; i &lt; <span style="font-weight:bold;font-style:italic">len</span>(list); i++ {
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">for</span> j := i; j &gt; 0; j-- {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> list[j] &lt; list[j-1] {
+</span></span><span style="display:flex;"><span>				list[j], list[j-1] = list[j-1], list[j]
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> list
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 class="heading" id="归并排序nlgn">
+  归并排序nlgn
+  <a class="anchor" href="#%e5%bd%92%e5%b9%b6%e6%8e%92%e5%ba%8fnlgn">#</a>
+</h6>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">mergeSort</span>(list []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>	merge := <span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span>(l, r []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>		ret := <span style="font-weight:bold;font-style:italic">make</span>([]<span style="font-weight:bold;text-decoration:underline">int</span>, 0)
+</span></span><span style="display:flex;"><span>		i, j := 0, 0
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">for</span> i &lt; <span style="font-weight:bold;font-style:italic">len</span>(l) &amp;&amp; j &lt; <span style="font-weight:bold;font-style:italic">len</span>(r) {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> l[i] &lt; r[j] {
+</span></span><span style="display:flex;"><span>				ret = <span style="font-weight:bold;font-style:italic">append</span>(ret, l[i])
+</span></span><span style="display:flex;"><span>				i++
+</span></span><span style="display:flex;"><span>			} <span style="font-weight:bold;text-decoration:underline">else</span> {
+</span></span><span style="display:flex;"><span>				ret = <span style="font-weight:bold;font-style:italic">append</span>(ret, r[j])
+</span></span><span style="display:flex;"><span>				j++
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">if</span> i &lt; <span style="font-weight:bold;font-style:italic">len</span>(l) {
+</span></span><span style="display:flex;"><span>			ret = <span style="font-weight:bold;font-style:italic">append</span>(ret, l[i:]...)
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">if</span> j &lt; <span style="font-weight:bold;font-style:italic">len</span>(r) {
+</span></span><span style="display:flex;"><span>			ret = <span style="font-weight:bold;font-style:italic">append</span>(ret, r[j:]...)
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">return</span> ret
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;font-style:italic;text-decoration:underline">var</span> dm <span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span>([]<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span>
+</span></span><span style="display:flex;"><span>	dm = <span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span>(ls []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">if</span> <span style="font-weight:bold;font-style:italic">len</span>(ls) == 1 {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">return</span> ls
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		ll := <span style="color:#666;font-weight:bold;font-style:italic">dm</span>(ls[:<span style="font-weight:bold;font-style:italic">len</span>(ls)/2])
+</span></span><span style="display:flex;"><span>		lr := <span style="color:#666;font-weight:bold;font-style:italic">dm</span>(ls[<span style="font-weight:bold;font-style:italic">len</span>(ls)/2:])
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">return</span> <span style="color:#666;font-weight:bold;font-style:italic">merge</span>(ll, lr)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> <span style="color:#666;font-weight:bold;font-style:italic">dm</span>(list)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 class="heading" id="快速排序nlgn">
+  快速排序nlgn
+  <a class="anchor" href="#%e5%bf%ab%e9%80%9f%e6%8e%92%e5%ba%8fnlgn">#</a>
+</h6>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">quickSort</span>(list []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>	part := <span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span>(l, r <span style="font-weight:bold;text-decoration:underline">int</span>) <span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>		pv := list[r]
+</span></span><span style="display:flex;"><span>		i := l
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">for</span> j := l; j &lt; r; j++ {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> list[j] &lt; pv {
+</span></span><span style="display:flex;"><span>				list[i], list[j] = list[j], list[i]
+</span></span><span style="display:flex;"><span>				i++
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		list[i], list[r] = list[r], list[i]
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">return</span> i
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;font-style:italic;text-decoration:underline">var</span> df <span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span>(<span style="font-weight:bold;text-decoration:underline">int</span>, <span style="font-weight:bold;text-decoration:underline">int</span>)
+</span></span><span style="display:flex;"><span>	df = <span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span>(l, r <span style="font-weight:bold;text-decoration:underline">int</span>) {
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">if</span> l &gt;= r {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">return</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		p := <span style="color:#666;font-weight:bold;font-style:italic">part</span>(l, r)
+</span></span><span style="display:flex;"><span>		<span style="color:#666;font-weight:bold;font-style:italic">df</span>(l, p-1)
+</span></span><span style="display:flex;"><span>		<span style="color:#666;font-weight:bold;font-style:italic">df</span>(p+1, r)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#666;font-weight:bold;font-style:italic">df</span>(0, <span style="font-weight:bold;font-style:italic">len</span>(list)-1)
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> list
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 class="heading" id="堆排序nlgn">
+  堆排序nlgn
+  <a class="anchor" href="#%e5%a0%86%e6%8e%92%e5%ba%8fnlgn">#</a>
+</h6>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">heapSort</span>(list []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>	minHeap := <span style="font-weight:bold;font-style:italic">make</span>([]<span style="font-weight:bold;text-decoration:underline">int</span>, 0)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#888;font-style:italic">// 建堆，上浮</span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> _, v := <span style="font-weight:bold;text-decoration:underline">range</span> list {
+</span></span><span style="display:flex;"><span>		minHeap = <span style="font-weight:bold;font-style:italic">append</span>(minHeap, v)
+</span></span><span style="display:flex;"><span>		j := <span style="font-weight:bold;font-style:italic">len</span>(minHeap) - 1
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">for</span> j &gt; 0 {
+</span></span><span style="display:flex;"><span>			parent := (j - 1) / 2
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> v &gt;= minHeap[parent] {
+</span></span><span style="display:flex;"><span>				<span style="font-weight:bold;text-decoration:underline">break</span>
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			minHeap[j] = minHeap[parent]
+</span></span><span style="display:flex;"><span>			j = parent
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#888;font-style:italic">// 取值，下沉</span>
+</span></span><span style="display:flex;"><span>	ret := <span style="font-weight:bold;font-style:italic">make</span>([]<span style="font-weight:bold;text-decoration:underline">int</span>, 0)
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> <span style="font-weight:bold;text-decoration:underline">range</span> minHeap {
+</span></span><span style="display:flex;"><span>		<span style="color:#888;font-style:italic">// 取堆顶</span>
+</span></span><span style="display:flex;"><span>		ret = <span style="font-weight:bold;font-style:italic">append</span>(ret, minHeap[0])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#888;font-style:italic">// 获取最后一个元素，并且挪到堆顶</span>
+</span></span><span style="display:flex;"><span>		x := minHeap[<span style="font-weight:bold;font-style:italic">len</span>(minHeap)-1]
+</span></span><span style="display:flex;"><span>		minHeap = minHeap[:<span style="font-weight:bold;font-style:italic">len</span>(minHeap)-1]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#888;font-style:italic">// 没有元素了</span>
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">if</span> <span style="font-weight:bold;font-style:italic">len</span>(minHeap) == 0 {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">break</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#888;font-style:italic">// 对堆顶元素做下沉操作</span>
+</span></span><span style="display:flex;"><span>		i := 0
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">for</span> {
+</span></span><span style="display:flex;"><span>			l := 2*i + 1 <span style="color:#888;font-style:italic">// 左孩子</span>
+</span></span><span style="display:flex;"><span>			r := 2*i + 2 <span style="color:#888;font-style:italic">// 右孩子</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#888;font-style:italic">// 如果没有左孩子，则停止下沉</span>
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> l &gt;= <span style="font-weight:bold;font-style:italic">len</span>(minHeap) {
+</span></span><span style="display:flex;"><span>				<span style="font-weight:bold;text-decoration:underline">break</span>
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#888;font-style:italic">// 如果有右孩子，则比较左右孩子得到比较小的孩子下标赋值给l</span>
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> r &lt; <span style="font-weight:bold;font-style:italic">len</span>(minHeap) &amp;&amp; minHeap[l] &gt; minHeap[r] {
+</span></span><span style="display:flex;"><span>				l = r
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#888;font-style:italic">// 如果比最小的孩子还要小，则停止下沉</span>
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> x &lt;= minHeap[l] {
+</span></span><span style="display:flex;"><span>				<span style="font-weight:bold;text-decoration:underline">break</span>
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#888;font-style:italic">// 将较小的孩子提升上来</span>
+</span></span><span style="display:flex;"><span>			minHeap[i] = minHeap[l]
+</span></span><span style="display:flex;"><span>			i = l
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		minHeap[i] = x
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> ret
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 class="heading" id="计数排序n">
+  计数排序n
+  <a class="anchor" href="#%e8%ae%a1%e6%95%b0%e6%8e%92%e5%ba%8fn">#</a>
+</h6>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">countSort</span>(list []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>	maxNum := list[0]
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> i := 1; i &lt; <span style="font-weight:bold;font-style:italic">len</span>(list)-1; i++ {
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">if</span> list[i] &gt; maxNum {
+</span></span><span style="display:flex;"><span>			maxNum = list[i]
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#888;font-style:italic">// 记录每个数的数量</span>
+</span></span><span style="display:flex;"><span>	count := <span style="font-weight:bold;font-style:italic">make</span>([]<span style="font-weight:bold;text-decoration:underline">int</span>, maxNum+1)
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> _, v := <span style="font-weight:bold;text-decoration:underline">range</span> list {
+</span></span><span style="display:flex;"><span>		count[v]++
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#888;font-style:italic">// 记录每个数的位置</span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> i := 1; i &lt; <span style="font-weight:bold;font-style:italic">len</span>(count); i++ {
+</span></span><span style="display:flex;"><span>		count[i] += count[i-1]
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#888;font-style:italic">// 从后往前遍历，保证稳定性</span>
+</span></span><span style="display:flex;"><span>	ret := <span style="font-weight:bold;font-style:italic">make</span>([]<span style="font-weight:bold;text-decoration:underline">int</span>, <span style="font-weight:bold;font-style:italic">len</span>(list))
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> i := <span style="font-weight:bold;font-style:italic">len</span>(list) - 1; i &gt;= 0; i-- {
+</span></span><span style="display:flex;"><span>		idx := count[list[i]] - 1
+</span></span><span style="display:flex;"><span>		ret[idx] = list[i]
+</span></span><span style="display:flex;"><span>		count[list[i]]--
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> ret
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div> </p>
+        
+    </div>
+</div>
+    
+
+    
+
+    
+    <div class="post-line">
+
+    
+    
+    
+    
+
+    <p class="line-date">2025-02-28 </p>
+
+    <div>
+        <p class="line-title">
+            <a href="/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE%E7%AE%97%E6%B3%95%E6%B1%87%E6%80%BB/">
+                二分查找算法汇总
+            </a>
+        </p>
+
+        
+        <p class="line-summary"> <h5 class="heading" id="二分查找原题">
+  二分查找原题
+  <a class="anchor" href="#%e4%ba%8c%e5%88%86%e6%9f%a5%e6%89%be%e5%8e%9f%e9%a2%98">#</a>
+</h5>
+<p><a href="https://leetcode.cn/problems/binary-search/">https://leetcode.cn/problems/binary-search/</a></p>
+<p>注意计算mid的时候不要用(left+right) / 2，因为可能会溢出</p>
+<pre tabindex="0"><code>func search(nums []int, target int) int {
+    n := len(nums)
+
+    left := 0
+    right := n-1
+    for left &lt;= right {
+        mid := left + ((right - left) / 2)
+        if nums[mid] == target {
+            return mid
+        }
+
+        if nums[mid] &gt; target {
+            right = mid-1
+        } else {
+            left = mid+1
+        }
+    }
+    return -1
+}
+</code></pre><h5 class="heading" id="搜索插入位置">
+  搜索插入位置
+  <a class="anchor" href="#%e6%90%9c%e7%b4%a2%e6%8f%92%e5%85%a5%e4%bd%8d%e7%bd%ae">#</a>
+</h5>
+<p><a href="https://leetcode.cn/problems/search-insert-position/">https://leetcode.cn/problems/search-insert-position/</a></p>
+<ol>
+<li>通过二分查找值</li>
+<li>插入位置默认为数组末尾，如果mid所在的数比target大，则更新插入位置为mid</li>
+</ol>
+<pre tabindex="0"><code>func searchInsert(nums []int, target int) int {
+    n := len(nums)
+    left, right := 0, n-1
+    ret := n
+
+    for left &lt;= right {
+        mid := left + ((right - left) / 2)
+        if nums[mid] == target {
+            return mid
+        }
+
+		// 如果mid所在的数比target大，则更新插入位置为mid
+        if nums[mid] &gt; target {
+            right = mid-1
+            ret = mid
+        } else {
+            left = mid + 1
+        }
+
+    }
+    return ret
+}
+</code></pre><h5 class="heading" id="查找元素出现的第一个和最后一个位置">
+  查找元素出现的第一个和最后一个位置
+  <a class="anchor" href="#%e6%9f%a5%e6%89%be%e5%85%83%e7%b4%a0%e5%87%ba%e7%8e%b0%e7%9a%84%e7%ac%ac%e4%b8%80%e4%b8%aa%e5%92%8c%e6%9c%80%e5%90%8e%e4%b8%80%e4%b8%aa%e4%bd%8d%e7%bd%ae">#</a>
+</h5>
+<p><a href="https://leetcode.cn/problems/find-first-and-last-position-of-element-in-sorted-array/description/">https://leetcode.cn/problems/find-first-and-last-position-of-element-in-sorted-array/description/</a></p> </p>
+        
+    </div>
+</div>
+    
+
+    
+
+    
+    <div class="post-line">
+
+    
+    
+    
+    
+
+    <p class="line-date">2025-02-28 </p>
+
+    <div>
+        <p class="line-title">
+            <a href="/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E8%B7%B3%E8%A1%A8%E5%92%8C%E5%AE%9E%E7%8E%B0/">
+                跳表和实现
+            </a>
+        </p>
+
+        
+        <p class="line-summary"> <h5 class="heading" id="数据结构示意图">
+  数据结构示意图
+  <a class="anchor" href="#%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84%e7%a4%ba%e6%84%8f%e5%9b%be">#</a>
+</h5>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-2025228725321.png" src="images/%E8%B7%B3%E8%A1%A8%E5%92%8C%E5%AE%9E%E7%8E%B0/image-2025228725321.png" >
+    </div>
+
+    
+</figure>
+</p>
+<h5 class="heading" id="代码实现">
+  代码实现
+  <a class="anchor" href="#%e4%bb%a3%e7%a0%81%e5%ae%9e%e7%8e%b0">#</a>
+</h5>
+<pre tabindex="0"><code>package main
+
+import &#34;math/rand&#34;
+
+const (
+	MaxLevel    = 16  // 跳表的最大层数
+	Probability = 0.5 // 随机提升层数的概率
+)
+
+type SkipList struct {
+	head  *Node
+	level int
+}
+
+type Node struct {
+	key   int
+	value string
+	next  []*Node
+}
+
+func randomLevel() int {
+	level := 1
+	for rand.Float64() &lt; Probability &amp;&amp; level &lt; MaxLevel {
+		level++
+	}
+	return level
+}
+
+func NewSkipList() *SkipList {
+	return &amp;SkipList{
+		head:  NewNode(0, &#34;&#34;, MaxLevel),
+		level: 1,
+	}
+}
+
+func NewNode(key int, value string, level int) *Node {
+	return &amp;Node{
+		key:   key,
+		value: value,
+		next:  make([]*Node, level),
+	}
+}
+
+// 插入元素
+func (sl *SkipList) Insert(key int, value string) {
+	update := make([]*Node, MaxLevel)
+	node := sl.head
+
+	// 找到每一层最后一个&lt;key的节点放入update中
+	for i := sl.level - 1; i &gt;= 0; i-- {
+		for node.next[i] != nil &amp;&amp; node.next[i].key &lt; key {
+			node = node.next[i]
+		}
+		update[i] = node
+	}
+
+	// 随机层数
+	level := randomLevel()
+	// 将&gt;sl.level的层，sl.head加入update中
+	if level &gt; sl.level {
+		for i := sl.level; i &lt; level; i++ {
+			update[i] = sl.head
+		}
+		sl.level = level
+	}
+
+	// 将新节点加入跳表
+	newNode := NewNode(key, value, level)
+	for i := 0; i &lt; level; i++ {
+		newNode.next[i] = update[i].next[i]
+		update[i].next[i] = newNode
+	}
+}
+
+// 查找元素
+func (sl *SkipList) Search(key int) (string, bool) {
+	// 从最高层开始往下，找到最后一个比key小的节点
+	node := sl.head
+	for i := sl.level - 1; i &gt;= 0; i-- {
+		for node.next[i] != nil &amp;&amp; node.next[i].key &lt; key {
+			node = node.next[i]
+		}
+	}
+
+	node = node.next[0]
+	if node != nil &amp;&amp; node.key == key {
+		return node.value, true
+	}
+
+	return &#34;&#34;, false
+}
+
+// 删除元素
+func (sl *SkipList) Delete(key int) bool {
+	update := make([]*Node, MaxLevel)
+
+	// 从最高层开始往下，找到最后一个比key小的节点
+	node := sl.head
+	for i := sl.level; i &gt;= 0; i-- {
+		for node.next[i] != nil &amp;&amp; node.next[i].key &lt; key {
+			node = node.next[i]
+		}
+		update[i] = node
+	}
+
+	// 判断元素是否存在
+	node = node.next[0]
+	if node == nil || node.key != key {
+		return false
+	}
+
+	// 从第1层开始往上，剔除目标节点
+	for i := 0; i &lt; sl.level; i++ {
+		if update[i].next[i] != node {
+			break
+		}
+		update[i].next[i] = node.next[i]
+	}
+
+	// 如果高层除了头节点没有多余节点，则降层
+	for sl.level &gt; 1 &amp;&amp; sl.head.next[sl.level-1] == nil {
+		sl.level--
+	}
+
+	return true
+}
+
+func main() {
+	sl := skiplist.NewSkipList()
+	sl.Insert(1, &#34;Hello&#34;)
+	sl.Insert(2, &#34;World&#34;)
+	sl.Insert(3, &#34;SkipList&#34;)
+
+	if value, found := sl.Search(2); found {
+		fmt.Println(&#34;Found key 2 with value:&#34;, value)
+	} else {
+		fmt.Println(&#34;Key 2 not found&#34;)
+	}
+
+	sl.Delete(2)
+	if value, found := sl.Search(2); found {
+		fmt.Println(&#34;Found key 2 with value:&#34;, value)
+	} else {
+		fmt.Println(&#34;Key 2 not found&#34;)
+	}
+
+}
+</code></pre> </p>
+        
+    </div>
+</div>
+    
+
+    
+
+    
+    <div class="post-line">
+
+    
+    
+    
+    
+
+    <p class="line-date">2025-02-28 </p>
+
+    <div>
+        <p class="line-title">
+            <a href="/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%93%88%E5%B8%8C%E8%A1%A8%E6%B8%90%E8%BF%9B%E5%BC%8Frehash%E5%AE%9E%E7%8E%B0/">
+                哈希表渐进式Rehash实现
+            </a>
+        </p>
+
+        
+        <p class="line-summary"> <h5 class="heading" id="说明">
+  说明
+  <a class="anchor" href="#%e8%af%b4%e6%98%8e">#</a>
+</h5>
+<ol>
+<li>哈希冲突采用链地址法</li>
+<li>在操作中进行渐进式扩容迁移</li>
+</ol>
+<h5 class="heading" id="代码实现">
+  代码实现
+  <a class="anchor" href="#%e4%bb%a3%e7%a0%81%e5%ae%9e%e7%8e%b0">#</a>
+</h5>
+<pre tabindex="0"><code>package main
+
+// 初始哈希表大小
+const initialSize = 4
+
+// 哈希表元素
+type entry struct {
+	key   string
+	value interface{}
+	next  *entry
+}
+
+type dict struct {
+	ht          [2][]*entry
+	rehashIndex int
+}
+
+func NewDict() *dict {
+	d := &amp;dict{
+		ht:          [2][]*entry{make([]*entry, initialSize), nil},
+		rehashIndex: -1,
+	}
+
+	return d
+}
+
+// 实现一个哈希函数
+func (d *dict) hash(key string) int {
+	h := 0
+	for i := 0; i &lt; len(key); i++ {
+		h = 31*h + int(key[i])
+	}
+
+	return h
+}
+
+// 插入元素
+func (d *dict) Add(key string, value interface{}) {
+	if d.rehashIndex != -1 {
+		d.rehash()
+	}
+
+	// 如果此刻没有在渐进扩容期间，并且当前元素个数&gt;=容量一半，触发渐进扩容
+	if d.ht[1] == nil &amp;&amp; len(d.ht[0]) &gt; 0 &amp;&amp; len(d.ht[0]) &gt;= cap(d.ht[0])/2 {
+		d.ht[1] = make([]*entry, len(d.ht[0])*2) //扩容一倍
+		d.rehashIndex = 0
+	}
+
+	index := d.hash(key) % len(d.ht[0])
+	newEntry := &amp;entry{key: key, value: value, next: d.ht[0][index]}
+	d.ht[0][index] = newEntry
+}
+
+// 获取元素
+func (d *dict) Get(key string) (interface{}, bool) {
+	if d.rehashIndex != -1 {
+		d.rehash()
+	}
+
+	// 在h[0]中找
+	index := d.hash(key) % len(d.ht[0])
+	for curEntry := d.ht[0][index]; curEntry != nil; curEntry = curEntry.next {
+		if curEntry.key == key {
+			return curEntry.value, true
+		}
+	}
+
+	// 在h[1]中找，已经迁移
+	if d.ht[1] != nil {
+		index = d.hash(key) % len(d.ht[1])
+		for entry := d.ht[1][index]; entry != nil; entry = entry.next {
+			if entry.key == key {
+				return entry.value, true
+			}
+		}
+	}
+
+	return nil, false
+}
+
+// 渐进rehash执行的函数
+func (d *dict) rehash() {
+	if d.rehashIndex == -1 {
+		return
+	}
+
+	// 渐进移动一个桶的数据
+	for i := 0; i &lt; 1 &amp;&amp; d.rehashIndex &lt; len(d.ht[0]); i++ {
+		if d.ht[0][d.rehashIndex] != nil {
+			curEntry := d.ht[0][d.rehashIndex]
+			for curEntry != nil {
+				nextEntry := curEntry.next
+				index := d.hash(curEntry.key) % len(d.ht[1])
+				curEntry.next = d.ht[1][index]
+				d.ht[1][index] = curEntry
+				curEntry = nextEntry
+			}
+
+			d.ht[0][d.rehashIndex] = nil
+		}
+		d.rehashIndex++
+	}
+
+	if d.rehashIndex &gt;= len(d.ht[0]) {
+		d.ht[0] = d.ht[1]
+		d.ht[1] = nil
+		d.rehashIndex = -1
+	}
+}
+
+
+func main() {
+	d := rehash.NewDict()
+	d.Add(&#34;foo&#34;, &#34;bar&#34;)
+	d.Add(&#34;baz&#34;, &#34;qux&#34;)
+
+	val, found := d.Get(&#34;foo&#34;)
+	if found {
+		fmt.Println(&#34;Found foo:&#34;, val)
+	} else {
+		fmt.Println(&#34;foo not found&#34;)
+	}
+
+	val, found = d.Get(&#34;baz&#34;)
+	if found {
+		fmt.Println(&#34;Found baz:&#34;, val)
+	} else {
+		fmt.Println(&#34;baz not found&#34;)
+	}
+
+	// 加这两个元素前已经触发扩容，因为设定元素个数&gt;=容量一半则扩容
+	d.Add(&#34;new&#34;, &#34;value&#34;)
+	d.Add(&#34;another&#34;, &#34;entry&#34;)
+
+	val, found = d.Get(&#34;new&#34;)
+	if found {
+		fmt.Println(&#34;Found new:&#34;, val)
+	} else {
+		fmt.Println(&#34;new not found&#34;)
+	}
+
+}
+</code></pre> </p>
+        
+    </div>
+</div>
+    
+
+    
+
+    
+    <div class="post-line">
+
+    
+    
+    
+    
+
+    <p class="line-date">2025-02-28 </p>
+
+    <div>
+        <p class="line-title">
+            <a href="/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E7%AE%97%E6%B3%95%E5%AE%9E%E7%8E%B0/">
+                布隆过滤器算法实现
+            </a>
+        </p>
+
+        
+        <p class="line-summary"> <h5 class="heading" id="实现原理">
+  实现原理
+  <a class="anchor" href="#%e5%ae%9e%e7%8e%b0%e5%8e%9f%e7%90%86">#</a>
+</h5>
+<p>布隆过滤器由一个位数组（bit array）和多个哈希函数（hash functions）组成。其工作原理如下：</p>
+<ol>
+<li><strong>初始化</strong>：
+<ul>
+<li>创建一个长度为 <code>m</code> 的位数组，将所有位初始化为 0。</li>
+<li>选择 <code>k</code> 个独立的哈希函数，每个哈希函数将输入映射到 <code>[0, m-1]</code> 范围内的一个位置。</li>
+</ul>
+</li>
+<li><strong>插入元素</strong>：
+<ul>
+<li>对于要插入的元素，通过 <code>k</code> 个哈希函数分别计算出 <code>k</code> 个哈希值。</li>
+<li>将位数组中这 <code>k</code> 个位置的值设置为 1。</li>
+</ul>
+</li>
+<li><strong>查询元素</strong>：
+<ul>
+<li>对于要查询的元素，通过 <code>k</code> 个哈希函数分别计算出 <code>k</code> 个哈希值。</li>
+<li>检查位数组中这 <code>k</code> 个位置的值，如果所有位置的值都为 1，则认为该元素可能在集合中；如果有任何一个位置的值为 0，则认为该元素不在集合中。</li>
+</ul>
+</li>
+</ol>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-2025228218354.png" src="images/%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E7%AE%97%E6%B3%95%E5%AE%9E%E7%8E%B0/image-2025228218354.png" >
+    </div>
+
+    
+</figure>
+</p>
+<h5 class="heading" id="代码实现">
+  代码实现
+  <a class="anchor" href="#%e4%bb%a3%e7%a0%81%e5%ae%9e%e7%8e%b0">#</a>
+</h5>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;text-decoration:underline">package</span> bloomfilter
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="font-weight:bold;text-decoration:underline">import</span> (
+</span></span><span style="display:flex;"><span>	<span style="color:#666;font-style:italic">&#34;hash/fnv&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#666;font-style:italic">&#34;math&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">type</span> BloomFilter <span style="font-weight:bold;font-style:italic;text-decoration:underline">struct</span> {
+</span></span><span style="display:flex;"><span>	bitset []<span style="font-weight:bold;text-decoration:underline">bool</span> <span style="color:#888;font-style:italic">//比特数组</span>
+</span></span><span style="display:flex;"><span>	m      <span style="font-weight:bold;text-decoration:underline">int</span>    <span style="color:#888;font-style:italic">//比特数组长度</span>
+</span></span><span style="display:flex;"><span>	k      <span style="font-weight:bold;text-decoration:underline">int</span>    <span style="color:#888;font-style:italic">//哈希函数数量</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">NewBloomFilter</span>(n <span style="font-weight:bold;text-decoration:underline">int</span>, p <span style="font-weight:bold;text-decoration:underline">float64</span>) *BloomFilter {
+</span></span><span style="display:flex;"><span>	m := <span style="font-weight:bold;font-style:italic">int</span>(math.<span style="color:#666;font-weight:bold;font-style:italic">Ceil</span>(<span style="font-weight:bold;font-style:italic">float64</span>(-n) * math.<span style="color:#666;font-weight:bold;font-style:italic">Log</span>(p) / math.<span style="color:#666;font-weight:bold;font-style:italic">Pow</span>(math.<span style="color:#666;font-weight:bold;font-style:italic">Log</span>(2), 2)))
+</span></span><span style="display:flex;"><span>	k := <span style="font-weight:bold;font-style:italic">int</span>(math.<span style="color:#666;font-weight:bold;font-style:italic">Ceil</span>(math.<span style="color:#666;font-weight:bold;font-style:italic">Log</span>(2) * <span style="font-weight:bold;font-style:italic">float64</span>(m) / <span style="font-weight:bold;font-style:italic">float64</span>(n)))
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> &amp;BloomFilter{
+</span></span><span style="display:flex;"><span>		bitset: <span style="font-weight:bold;font-style:italic">make</span>([]<span style="font-weight:bold;text-decoration:underline">bool</span>, m),
+</span></span><span style="display:flex;"><span>		m:      m,
+</span></span><span style="display:flex;"><span>		k:      k,
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#888;font-style:italic">// 哈希函数</span>
+</span></span><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> (bf *BloomFilter) <span style="color:#666;font-weight:bold;font-style:italic">hash</span>(data []<span style="font-weight:bold;text-decoration:underline">byte</span>, seed <span style="font-weight:bold;text-decoration:underline">uint32</span>) <span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>	h := fnv.<span style="color:#666;font-weight:bold;font-style:italic">New32a</span>()
+</span></span><span style="display:flex;"><span>	h.<span style="color:#666;font-weight:bold;font-style:italic">Write</span>(data)
+</span></span><span style="display:flex;"><span>	hash := h.<span style="color:#666;font-weight:bold;font-style:italic">Sum32</span>()
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> <span style="font-weight:bold;font-style:italic">int</span>((hash + seed) % <span style="font-weight:bold;font-style:italic">uint32</span>(bf.m))
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#888;font-style:italic">// 添加元素</span>
+</span></span><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> (bf *BloomFilter) <span style="color:#666;font-weight:bold;font-style:italic">Add</span>(item <span style="font-weight:bold;text-decoration:underline">string</span>) {
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> i := 0; i &lt; bf.k; i++ {
+</span></span><span style="display:flex;"><span>		pos := bf.<span style="color:#666;font-weight:bold;font-style:italic">hash</span>([]<span style="font-weight:bold;font-style:italic">byte</span>(item), <span style="font-weight:bold;font-style:italic">uint32</span>(i))
+</span></span><span style="display:flex;"><span>		bf.bitset[pos] = <span style="font-weight:bold;text-decoration:underline">true</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#888;font-style:italic">// 查找元素</span>
+</span></span><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> (bf *BloomFilter) <span style="color:#666;font-weight:bold;font-style:italic">Contains</span>(item <span style="font-weight:bold;text-decoration:underline">string</span>) <span style="font-weight:bold;text-decoration:underline">bool</span> {
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> i := 0; i &lt; bf.k; i++ {
+</span></span><span style="display:flex;"><span>		pos := bf.<span style="color:#666;font-weight:bold;font-style:italic">hash</span>([]<span style="font-weight:bold;font-style:italic">byte</span>(item), <span style="font-weight:bold;font-style:italic">uint32</span>(i))
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">if</span> !bf.bitset[pos] {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">return</span> <span style="font-weight:bold;text-decoration:underline">false</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> <span style="font-weight:bold;text-decoration:underline">true</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div> </p>
+        
+    </div>
+</div>
+    
+
+    
+
+    
+
+</div>
+
+    </main>
+  </div>
+
+  <footer>
+    
+
+    
+    <p>Powered by
+        <a href="https://gohugo.io/">Hugo</a>
+        and
+        <a href="https://github.com/tomfran/typo">tomfran/typo</a>
+    </p>
+    
+    
+    
+
+
+  </footer>
+
+  
+
+</body>
+
+<script src="/js/theme-switch.js"></script>
+<script defer src="/js/copy-code.js"></script>
+</html>

@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en-us"
+  dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+
+<link rel="icon" type="image/ico" href="https://weenable.github.io//favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://weenable.github.io//favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://weenable.github.io//favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://weenable.github.io//android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://weenable.github.io//apple-touch-icon.png">
+
+<meta name="description" content=""/>
+
+
+
+<title>
+    
+    排序算法汇总 | Ween&#39;s Blog
+    
+</title>
+
+<link rel="canonical" href="https://weenable.github.io/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E6%B1%87%E6%80%BB/"/>
+
+<meta property="og:url" content="https://weenable.github.io/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E6%B1%87%E6%80%BB/">
+  <meta property="og:site_name" content="Ween&#39;s Blog">
+  <meta property="og:title" content="排序算法汇总">
+  <meta property="og:description" content="冒泡排序n^2 # func bubbleSort(list []int) []int { done := false for i := len(list) - 1; i &gt;= 0; i-- { done = true for j := 0; j &lt; i; i&#43;&#43; { if list[j] &gt; list[j&#43;1] { list[j], list[j&#43;1] = list[j], list[j&#43;1] done = false } } if done { break } } return list } 选择排序n^2 # func selectSort(list []int) []int { for i := len(list) - 1; i &gt;= 0; i-- { maxIdx := 0 for j := 1; j &lt;= i; i&#43;&#43; { if list[j] &gt; list[maxIdx] { maxIdx = j } } list[maxIdx], list[i] = list[i], list[maxIdx] } return list } 插入排序n^2 # func insertSort(list []int) []int { for i := 0; i &lt; len(list); i&#43;&#43; { for j := i; j &gt; 0; j-- { if list[j] &lt; list[j-1] { list[j], list[j-1] = list[j-1], list[j] } } } return list } 归并排序nlgn # func mergeSort(list []int) []int { merge := func(l, r []int) []int { ret := make([]int, 0) i, j := 0, 0 for i &lt; len(l) &amp;&amp; j &lt; len(r) { if l[i] &lt; r[j] { ret = append(ret, l[i]) i&#43;&#43; } else { ret = append(ret, r[j]) j&#43;&#43; } } if i &lt; len(l) { ret = append(ret, l[i:]...) } if j &lt; len(r) { ret = append(ret, r[j:]...) } return ret } var dm func([]int) []int dm = func(ls []int) []int { if len(ls) == 1 { return ls } ll := dm(ls[:len(ls)/2]) lr := dm(ls[len(ls)/2:]) return merge(ll, lr) } return dm(list) } 快速排序nlgn # func quickSort(list []int) []int { part := func(l, r int) int { pv := list[r] i := l for j := l; j &lt; r; j&#43;&#43; { if list[j] &lt; pv { list[i], list[j] = list[j], list[i] i&#43;&#43; } } list[i], list[r] = list[r], list[i] return i } var df func(int, int) df = func(l, r int) { if l &gt;= r { return } p := part(l, r) df(l, p-1) df(p&#43;1, r) } df(0, len(list)-1) return list } 堆排序nlgn # func heapSort(list []int) []int { minHeap := make([]int, 0) // 建堆，上浮 for _, v := range list { minHeap = append(minHeap, v) j := len(minHeap) - 1 for j &gt; 0 { parent := (j - 1) / 2 if v &gt;= minHeap[parent] { break } minHeap[j] = minHeap[parent] j = parent } } // 取值，下沉 ret := make([]int, 0) for range minHeap { // 取堆顶 ret = append(ret, minHeap[0]) // 获取最后一个元素，并且挪到堆顶 x := minHeap[len(minHeap)-1] minHeap = minHeap[:len(minHeap)-1] // 没有元素了 if len(minHeap) == 0 { break } // 对堆顶元素做下沉操作 i := 0 for { l := 2*i &#43; 1 // 左孩子 r := 2*i &#43; 2 // 右孩子 // 如果没有左孩子，则停止下沉 if l &gt;= len(minHeap) { break } // 如果有右孩子，则比较左右孩子得到比较小的孩子下标赋值给l if r &lt; len(minHeap) &amp;&amp; minHeap[l] &gt; minHeap[r] { l = r } // 如果比最小的孩子还要小，则停止下沉 if x &lt;= minHeap[l] { break } // 将较小的孩子提升上来 minHeap[i] = minHeap[l] i = l } minHeap[i] = x } return ret } 计数排序n # func countSort(list []int) []int { maxNum := list[0] for i := 1; i &lt; len(list)-1; i&#43;&#43; { if list[i] &gt; maxNum { maxNum = list[i] } } // 记录每个数的数量 count := make([]int, maxNum&#43;1) for _, v := range list { count[v]&#43;&#43; } // 记录每个数的位置 for i := 1; i &lt; len(count); i&#43;&#43; { count[i] &#43;= count[i-1] } // 从后往前遍历，保证稳定性 ret := make([]int, len(list)) for i := len(list) - 1; i &gt;= 0; i-- { idx := count[list[i]] - 1 ret[idx] = list[i] count[list[i]]-- } return ret }">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-02-28T19:24:41+08:00">
+    <meta property="article:modified_time" content="2025-02-28T19:24:41+08:00">
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/assets/combined.min.db1f6bdda2e5a4d5c9a316aa295aaeba691b0d6154397bbb6787fea95b273e6a.css" media="all">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+<body class="auto">
+
+  <div class="content">
+    <header>
+      
+
+<div class="header">
+
+    
+
+    <h1 class="header-title">
+        <a href="https://weenable.github.io/">Ween&#39;s Blog</a>
+    </h1>
+
+    <div class="flex">
+        
+
+        
+        
+      
+        <p class="small ">
+            <a href="/" >
+                /home
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/posts" >
+                /posts
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/categories" >
+                /categories
+            </a>
+        </p>
+        
+        
+    </div>
+
+    
+
+</div>
+
+    </header>
+
+    <main class="main">
+      
+
+
+
+
+
+
+
+<div  class="autonumber" >
+
+  <div class="single-intro-container">
+
+    
+
+    <h1 class="single-title">排序算法汇总</h1>
+    
+
+    
+
+    <p class="single-readtime">
+      
+      
+      
+      <time datetime="2025-02-28T19:24:41&#43;08:00">February 28, 2025</time>
+      
+
+      
+      &nbsp; · &nbsp;
+      3 min read
+      
+    </p>
+
+  </div>
+
+  
+
+  
+
+  
+  <aside class="toc">
+    <p><strong>Table of contents</strong></p>
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </aside>
+  
+
+  
+
+  <div class="single-content">
+    <h6 class="heading" id="冒泡排序n2">
+  冒泡排序n^2
+  <a class="anchor" href="#%e5%86%92%e6%b3%a1%e6%8e%92%e5%ba%8fn2">#</a>
+</h6>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">bubbleSort</span>(list []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>	done := <span style="font-weight:bold;text-decoration:underline">false</span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> i := <span style="font-weight:bold;font-style:italic">len</span>(list) - 1; i &gt;= 0; i-- {
+</span></span><span style="display:flex;"><span>		done = <span style="font-weight:bold;text-decoration:underline">true</span>
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">for</span> j := 0; j &lt; i; i++ {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> list[j] &gt; list[j+1] {
+</span></span><span style="display:flex;"><span>				list[j], list[j+1] = list[j], list[j+1]
+</span></span><span style="display:flex;"><span>				done = <span style="font-weight:bold;text-decoration:underline">false</span>
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">if</span> done {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">break</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> list
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 class="heading" id="选择排序n2">
+  选择排序n^2
+  <a class="anchor" href="#%e9%80%89%e6%8b%a9%e6%8e%92%e5%ba%8fn2">#</a>
+</h6>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">selectSort</span>(list []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> i := <span style="font-weight:bold;font-style:italic">len</span>(list) - 1; i &gt;= 0; i-- {
+</span></span><span style="display:flex;"><span>		maxIdx := 0
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">for</span> j := 1; j &lt;= i; i++ {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> list[j] &gt; list[maxIdx] {
+</span></span><span style="display:flex;"><span>				maxIdx = j
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		list[maxIdx], list[i] = list[i], list[maxIdx]
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> list
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 class="heading" id="插入排序n2">
+  插入排序n^2
+  <a class="anchor" href="#%e6%8f%92%e5%85%a5%e6%8e%92%e5%ba%8fn2">#</a>
+</h6>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">insertSort</span>(list []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> i := 0; i &lt; <span style="font-weight:bold;font-style:italic">len</span>(list); i++ {
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">for</span> j := i; j &gt; 0; j-- {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> list[j] &lt; list[j-1] {
+</span></span><span style="display:flex;"><span>				list[j], list[j-1] = list[j-1], list[j]
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> list
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 class="heading" id="归并排序nlgn">
+  归并排序nlgn
+  <a class="anchor" href="#%e5%bd%92%e5%b9%b6%e6%8e%92%e5%ba%8fnlgn">#</a>
+</h6>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">mergeSort</span>(list []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>	merge := <span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span>(l, r []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>		ret := <span style="font-weight:bold;font-style:italic">make</span>([]<span style="font-weight:bold;text-decoration:underline">int</span>, 0)
+</span></span><span style="display:flex;"><span>		i, j := 0, 0
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">for</span> i &lt; <span style="font-weight:bold;font-style:italic">len</span>(l) &amp;&amp; j &lt; <span style="font-weight:bold;font-style:italic">len</span>(r) {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> l[i] &lt; r[j] {
+</span></span><span style="display:flex;"><span>				ret = <span style="font-weight:bold;font-style:italic">append</span>(ret, l[i])
+</span></span><span style="display:flex;"><span>				i++
+</span></span><span style="display:flex;"><span>			} <span style="font-weight:bold;text-decoration:underline">else</span> {
+</span></span><span style="display:flex;"><span>				ret = <span style="font-weight:bold;font-style:italic">append</span>(ret, r[j])
+</span></span><span style="display:flex;"><span>				j++
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">if</span> i &lt; <span style="font-weight:bold;font-style:italic">len</span>(l) {
+</span></span><span style="display:flex;"><span>			ret = <span style="font-weight:bold;font-style:italic">append</span>(ret, l[i:]...)
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">if</span> j &lt; <span style="font-weight:bold;font-style:italic">len</span>(r) {
+</span></span><span style="display:flex;"><span>			ret = <span style="font-weight:bold;font-style:italic">append</span>(ret, r[j:]...)
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">return</span> ret
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;font-style:italic;text-decoration:underline">var</span> dm <span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span>([]<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span>
+</span></span><span style="display:flex;"><span>	dm = <span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span>(ls []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">if</span> <span style="font-weight:bold;font-style:italic">len</span>(ls) == 1 {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">return</span> ls
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		ll := <span style="color:#666;font-weight:bold;font-style:italic">dm</span>(ls[:<span style="font-weight:bold;font-style:italic">len</span>(ls)/2])
+</span></span><span style="display:flex;"><span>		lr := <span style="color:#666;font-weight:bold;font-style:italic">dm</span>(ls[<span style="font-weight:bold;font-style:italic">len</span>(ls)/2:])
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">return</span> <span style="color:#666;font-weight:bold;font-style:italic">merge</span>(ll, lr)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> <span style="color:#666;font-weight:bold;font-style:italic">dm</span>(list)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 class="heading" id="快速排序nlgn">
+  快速排序nlgn
+  <a class="anchor" href="#%e5%bf%ab%e9%80%9f%e6%8e%92%e5%ba%8fnlgn">#</a>
+</h6>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">quickSort</span>(list []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>	part := <span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span>(l, r <span style="font-weight:bold;text-decoration:underline">int</span>) <span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>		pv := list[r]
+</span></span><span style="display:flex;"><span>		i := l
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">for</span> j := l; j &lt; r; j++ {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> list[j] &lt; pv {
+</span></span><span style="display:flex;"><span>				list[i], list[j] = list[j], list[i]
+</span></span><span style="display:flex;"><span>				i++
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		list[i], list[r] = list[r], list[i]
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">return</span> i
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;font-style:italic;text-decoration:underline">var</span> df <span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span>(<span style="font-weight:bold;text-decoration:underline">int</span>, <span style="font-weight:bold;text-decoration:underline">int</span>)
+</span></span><span style="display:flex;"><span>	df = <span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span>(l, r <span style="font-weight:bold;text-decoration:underline">int</span>) {
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">if</span> l &gt;= r {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">return</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		p := <span style="color:#666;font-weight:bold;font-style:italic">part</span>(l, r)
+</span></span><span style="display:flex;"><span>		<span style="color:#666;font-weight:bold;font-style:italic">df</span>(l, p-1)
+</span></span><span style="display:flex;"><span>		<span style="color:#666;font-weight:bold;font-style:italic">df</span>(p+1, r)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#666;font-weight:bold;font-style:italic">df</span>(0, <span style="font-weight:bold;font-style:italic">len</span>(list)-1)
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> list
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 class="heading" id="堆排序nlgn">
+  堆排序nlgn
+  <a class="anchor" href="#%e5%a0%86%e6%8e%92%e5%ba%8fnlgn">#</a>
+</h6>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">heapSort</span>(list []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>	minHeap := <span style="font-weight:bold;font-style:italic">make</span>([]<span style="font-weight:bold;text-decoration:underline">int</span>, 0)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#888;font-style:italic">// 建堆，上浮</span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> _, v := <span style="font-weight:bold;text-decoration:underline">range</span> list {
+</span></span><span style="display:flex;"><span>		minHeap = <span style="font-weight:bold;font-style:italic">append</span>(minHeap, v)
+</span></span><span style="display:flex;"><span>		j := <span style="font-weight:bold;font-style:italic">len</span>(minHeap) - 1
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">for</span> j &gt; 0 {
+</span></span><span style="display:flex;"><span>			parent := (j - 1) / 2
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> v &gt;= minHeap[parent] {
+</span></span><span style="display:flex;"><span>				<span style="font-weight:bold;text-decoration:underline">break</span>
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			minHeap[j] = minHeap[parent]
+</span></span><span style="display:flex;"><span>			j = parent
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#888;font-style:italic">// 取值，下沉</span>
+</span></span><span style="display:flex;"><span>	ret := <span style="font-weight:bold;font-style:italic">make</span>([]<span style="font-weight:bold;text-decoration:underline">int</span>, 0)
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> <span style="font-weight:bold;text-decoration:underline">range</span> minHeap {
+</span></span><span style="display:flex;"><span>		<span style="color:#888;font-style:italic">// 取堆顶</span>
+</span></span><span style="display:flex;"><span>		ret = <span style="font-weight:bold;font-style:italic">append</span>(ret, minHeap[0])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#888;font-style:italic">// 获取最后一个元素，并且挪到堆顶</span>
+</span></span><span style="display:flex;"><span>		x := minHeap[<span style="font-weight:bold;font-style:italic">len</span>(minHeap)-1]
+</span></span><span style="display:flex;"><span>		minHeap = minHeap[:<span style="font-weight:bold;font-style:italic">len</span>(minHeap)-1]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#888;font-style:italic">// 没有元素了</span>
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">if</span> <span style="font-weight:bold;font-style:italic">len</span>(minHeap) == 0 {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">break</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#888;font-style:italic">// 对堆顶元素做下沉操作</span>
+</span></span><span style="display:flex;"><span>		i := 0
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">for</span> {
+</span></span><span style="display:flex;"><span>			l := 2*i + 1 <span style="color:#888;font-style:italic">// 左孩子</span>
+</span></span><span style="display:flex;"><span>			r := 2*i + 2 <span style="color:#888;font-style:italic">// 右孩子</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#888;font-style:italic">// 如果没有左孩子，则停止下沉</span>
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> l &gt;= <span style="font-weight:bold;font-style:italic">len</span>(minHeap) {
+</span></span><span style="display:flex;"><span>				<span style="font-weight:bold;text-decoration:underline">break</span>
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#888;font-style:italic">// 如果有右孩子，则比较左右孩子得到比较小的孩子下标赋值给l</span>
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> r &lt; <span style="font-weight:bold;font-style:italic">len</span>(minHeap) &amp;&amp; minHeap[l] &gt; minHeap[r] {
+</span></span><span style="display:flex;"><span>				l = r
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#888;font-style:italic">// 如果比最小的孩子还要小，则停止下沉</span>
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">if</span> x &lt;= minHeap[l] {
+</span></span><span style="display:flex;"><span>				<span style="font-weight:bold;text-decoration:underline">break</span>
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#888;font-style:italic">// 将较小的孩子提升上来</span>
+</span></span><span style="display:flex;"><span>			minHeap[i] = minHeap[l]
+</span></span><span style="display:flex;"><span>			i = l
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		minHeap[i] = x
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> ret
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 class="heading" id="计数排序n">
+  计数排序n
+  <a class="anchor" href="#%e8%ae%a1%e6%95%b0%e6%8e%92%e5%ba%8fn">#</a>
+</h6>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">countSort</span>(list []<span style="font-weight:bold;text-decoration:underline">int</span>) []<span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>	maxNum := list[0]
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> i := 1; i &lt; <span style="font-weight:bold;font-style:italic">len</span>(list)-1; i++ {
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">if</span> list[i] &gt; maxNum {
+</span></span><span style="display:flex;"><span>			maxNum = list[i]
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#888;font-style:italic">// 记录每个数的数量</span>
+</span></span><span style="display:flex;"><span>	count := <span style="font-weight:bold;font-style:italic">make</span>([]<span style="font-weight:bold;text-decoration:underline">int</span>, maxNum+1)
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> _, v := <span style="font-weight:bold;text-decoration:underline">range</span> list {
+</span></span><span style="display:flex;"><span>		count[v]++
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#888;font-style:italic">// 记录每个数的位置</span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> i := 1; i &lt; <span style="font-weight:bold;font-style:italic">len</span>(count); i++ {
+</span></span><span style="display:flex;"><span>		count[i] += count[i-1]
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#888;font-style:italic">// 从后往前遍历，保证稳定性</span>
+</span></span><span style="display:flex;"><span>	ret := <span style="font-weight:bold;font-style:italic">make</span>([]<span style="font-weight:bold;text-decoration:underline">int</span>, <span style="font-weight:bold;font-style:italic">len</span>(list))
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> i := <span style="font-weight:bold;font-style:italic">len</span>(list) - 1; i &gt;= 0; i-- {
+</span></span><span style="display:flex;"><span>		idx := count[list[i]] - 1
+</span></span><span style="display:flex;"><span>		ret[idx] = list[i]
+</span></span><span style="display:flex;"><span>		count[list[i]]--
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> ret
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div>
+    
+  </div>
+
+  
+
+  
+
+  
+  
+
+<div class="single-pagination">
+    <hr />
+
+    <div class="flex">
+
+        <div class="single-pagination-prev">
+            
+            <div class="single-pagination-container-prev">
+                <div class="single-pagination-text">←</div>
+                <div class="single-pagination-text">
+                    <a href="/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE%E7%AE%97%E6%B3%95%E6%B1%87%E6%80%BB/">
+                        二分查找算法汇总
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="single-pagination-next">
+            
+        </div>
+
+    </div>
+
+    <hr />
+</div>
+
+
+
+  
+
+  
+
+  
+  <div class="back-to-top">
+    <a href="#top">
+      back to top
+    </a>
+  </div>
+  
+
+</div>
+
+
+    </main>
+  </div>
+
+  <footer>
+    
+
+    
+    <p>Powered by
+        <a href="https://gohugo.io/">Hugo</a>
+        and
+        <a href="https://github.com/tomfran/typo">tomfran/typo</a>
+    </p>
+    
+    
+    
+
+
+  </footer>
+
+  
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body);"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false }
+      ]
+    });
+  });
+</script>
+  
+
+</body>
+
+<script src="/js/theme-switch.js"></script>
+<script defer src="/js/copy-code.js"></script>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en-us"
+  dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+
+<link rel="icon" type="image/ico" href="https://weenable.github.io//favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://weenable.github.io//favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://weenable.github.io//favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://weenable.github.io//android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://weenable.github.io//apple-touch-icon.png">
+
+<meta name="description" content=""/>
+
+
+
+<title>
+    
+    分布式脑裂 | Ween&#39;s Blog
+    
+</title>
+
+<link rel="canonical" href="https://weenable.github.io/posts/%E6%9E%B6%E6%9E%84/%E5%88%86%E5%B8%83%E5%BC%8F%E8%84%91%E8%A3%82/"/>
+
+<meta property="og:url" content="https://weenable.github.io/posts/%E6%9E%B6%E6%9E%84/%E5%88%86%E5%B8%83%E5%BC%8F%E8%84%91%E8%A3%82/">
+  <meta property="og:site_name" content="Ween&#39;s Blog">
+  <meta property="og:title" content="分布式脑裂">
+  <meta property="og:description" content="脑裂定义 # 一个整体的系统分裂成两个独立的节点，争夺共享资源造成系统混乱
+出现脑裂的原因 # 主心跳检测超时，导致主备切换，备提供服务后，主又恢复正常，出现双主
+解决思路 # 仲裁机制 通过设置一个仲裁角色，定时探活主备，但是仲裁者会存在高可用和性能瓶颈
+授权机制 假设slave已经提供服务，会有颁发的授权lease，假设master还在提供服务则lease必然是失效的，请求应当是失败的
+隔离机制
+共享资源fencing：确保只有一个master往共享存储提供写数据 客户端fencing：确保只有一个master可以响应客户端请求 slave fencing：确保只有一个master可以向slave下发命令">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-02-28T19:18:43+08:00">
+    <meta property="article:modified_time" content="2025-02-28T19:18:43+08:00">
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/assets/combined.min.db1f6bdda2e5a4d5c9a316aa295aaeba691b0d6154397bbb6787fea95b273e6a.css" media="all">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+<body class="auto">
+
+  <div class="content">
+    <header>
+      
+
+<div class="header">
+
+    
+
+    <h1 class="header-title">
+        <a href="https://weenable.github.io/">Ween&#39;s Blog</a>
+    </h1>
+
+    <div class="flex">
+        
+
+        
+        
+      
+        <p class="small ">
+            <a href="/" >
+                /home
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/posts" >
+                /posts
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/categories" >
+                /categories
+            </a>
+        </p>
+        
+        
+    </div>
+
+    
+
+</div>
+
+    </header>
+
+    <main class="main">
+      
+
+
+
+
+
+
+
+<div  class="autonumber" >
+
+  <div class="single-intro-container">
+
+    
+
+    <h1 class="single-title">分布式脑裂</h1>
+    
+
+    
+
+    <p class="single-readtime">
+      
+      
+      
+      <time datetime="2025-02-28T19:18:43&#43;08:00">February 28, 2025</time>
+      
+
+      
+      &nbsp; · &nbsp;
+      1 min read
+      
+    </p>
+
+  </div>
+
+  
+
+  
+
+  
+  <aside class="toc">
+    <p><strong>Table of contents</strong></p>
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </aside>
+  
+
+  
+
+  <div class="single-content">
+    <h4 class="heading" id="脑裂定义">
+  脑裂定义
+  <a class="anchor" href="#%e8%84%91%e8%a3%82%e5%ae%9a%e4%b9%89">#</a>
+</h4>
+<p>一个整体的系统分裂成两个独立的节点，争夺共享资源造成系统混乱</p>
+<h4 class="heading" id="出现脑裂的原因">
+  出现脑裂的原因
+  <a class="anchor" href="#%e5%87%ba%e7%8e%b0%e8%84%91%e8%a3%82%e7%9a%84%e5%8e%9f%e5%9b%a0">#</a>
+</h4>
+<p>主心跳检测超时，导致主备切换，备提供服务后，主又恢复正常，出现双主</p>
+<h4 class="heading" id="解决思路">
+  解决思路
+  <a class="anchor" href="#%e8%a7%a3%e5%86%b3%e6%80%9d%e8%b7%af">#</a>
+</h4>
+<ul>
+<li>
+<p>仲裁机制
+通过设置一个仲裁角色，定时探活主备，但是仲裁者会存在高可用和性能瓶颈</p>
+</li>
+<li>
+<p>授权机制
+假设slave已经提供服务，会有颁发的授权lease，假设master还在提供服务则lease必然是失效的，请求应当是失败的</p>
+</li>
+<li>
+<p>隔离机制</p>
+<ul>
+<li>共享资源fencing：确保只有一个master往共享存储提供写数据</li>
+<li>客户端fencing：确保只有一个master可以响应客户端请求</li>
+<li>slave fencing：确保只有一个master可以向slave下发命令</li>
+</ul>
+</li>
+</ul>
+
+    
+  </div>
+
+  
+
+  
+
+  
+  
+
+<div class="single-pagination">
+    <hr />
+
+    <div class="flex">
+
+        <div class="single-pagination-prev">
+            
+            <div class="single-pagination-container-prev">
+                <div class="single-pagination-text">←</div>
+                <div class="single-pagination-text">
+                    <a href="/posts/%E6%9E%B6%E6%9E%84/%E5%9C%A8%E7%BA%BF%E6%94%AF%E4%BB%98%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/">
+                        在线支付系统设计
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="single-pagination-next">
+            
+            <div class="single-pagination-container-next">
+                <div class="single-pagination-text">
+                    <a href="/posts/%E6%9E%B6%E6%9E%84/%E5%9F%BA%E4%BA%8Eredis%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0/">
+                        基于redis的分布式锁实现
+                    </a>
+                </div>
+                <div class="single-pagination-text">→</div>
+            </div>
+            
+        </div>
+
+    </div>
+
+    <hr />
+</div>
+
+
+
+  
+
+  
+
+  
+  <div class="back-to-top">
+    <a href="#top">
+      back to top
+    </a>
+  </div>
+  
+
+</div>
+
+
+    </main>
+  </div>
+
+  <footer>
+    
+
+    
+    <p>Powered by
+        <a href="https://gohugo.io/">Hugo</a>
+        and
+        <a href="https://github.com/tomfran/typo">tomfran/typo</a>
+    </p>
+    
+    
+    
+
+
+  </footer>
+
+  
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body);"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false }
+      ]
+    });
+  });
+</script>
+  
+
+</body>
+
+<script src="/js/theme-switch.js"></script>
+<script defer src="/js/copy-code.js"></script>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en-us"
+  dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+
+<link rel="icon" type="image/ico" href="https://weenable.github.io//favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://weenable.github.io//favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://weenable.github.io//favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://weenable.github.io//android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://weenable.github.io//apple-touch-icon.png">
+
+<meta name="description" content=""/>
+
+
+
+<title>
+    
+    以太坊消息签名 | Ween&#39;s Blog
+    
+</title>
+
+<link rel="canonical" href="https://weenable.github.io/posts/web3/%E4%BB%A5%E5%A4%AA%E5%9D%8A%E6%B6%88%E6%81%AF%E7%AD%BE%E5%90%8D/"/>
+
+<meta property="og:url" content="https://weenable.github.io/posts/web3/%E4%BB%A5%E5%A4%AA%E5%9D%8A%E6%B6%88%E6%81%AF%E7%AD%BE%E5%90%8D/">
+  <meta property="og:site_name" content="Ween&#39;s Blog">
+  <meta property="og:title" content="以太坊消息签名">
+  <meta property="og:description" content="签名算法和原理 # 以太坊使用椭圆曲线加密算法ECDSA来进行交易签名
+密钥生成：生成私钥和公钥，私钥用于签名，公钥用于验证签名 交易签名：使用私钥对原始消息进行签名 对交易使用RLP（递归长度前缀编码）编码序列化 使用keccka256哈希函数对编码后的交易进行计算 使用私钥对哈希值进行签名，生成r、s、v值 签名验证：使用公钥以及原始消息来验证签名的有效性 验证签名代码：
+func IsValidOrderSignature(address string, message string, sign string) bool { ethMessage := []byte(&#34;\x19Ethereum Signed Message:\n&#34; &#43; strconv.Itoa(len(message)) &#43; message) hash := crypto.Keccak256(ethMessage) sigBytes := hexutil.MustDecode(sign) if sigBytes[64] == 27 || sigBytes[64] == 28 { sigBytes[64] -= 27 } pubKey, err := crypto.SigToPub(hash, sigBytes) if err != nil { return false } recAddress := crypto.PubkeyToAddress(*pubKey) recStr := strings.ToLower(recAddress.String()) return recStr == strings.ToLower(address) }">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-02-28T18:55:39+08:00">
+    <meta property="article:modified_time" content="2025-02-28T18:55:39+08:00">
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/assets/combined.min.db1f6bdda2e5a4d5c9a316aa295aaeba691b0d6154397bbb6787fea95b273e6a.css" media="all">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+<body class="auto">
+
+  <div class="content">
+    <header>
+      
+
+<div class="header">
+
+    
+
+    <h1 class="header-title">
+        <a href="https://weenable.github.io/">Ween&#39;s Blog</a>
+    </h1>
+
+    <div class="flex">
+        
+
+        
+        
+      
+        <p class="small ">
+            <a href="/" >
+                /home
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/posts" >
+                /posts
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/categories" >
+                /categories
+            </a>
+        </p>
+        
+        
+    </div>
+
+    
+
+</div>
+
+    </header>
+
+    <main class="main">
+      
+
+
+
+
+
+
+
+<div  class="autonumber" >
+
+  <div class="single-intro-container">
+
+    
+
+    <h1 class="single-title">以太坊消息签名</h1>
+    
+
+    
+
+    <p class="single-readtime">
+      
+      
+      
+      <time datetime="2025-02-28T18:55:39&#43;08:00">February 28, 2025</time>
+      
+
+      
+      &nbsp; · &nbsp;
+      1 min read
+      
+    </p>
+
+  </div>
+
+  
+
+  
+
+  
+  <aside class="toc">
+    <p><strong>Table of contents</strong></p>
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#签名算法和原理">签名算法和原理</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </aside>
+  
+
+  
+
+  <div class="single-content">
+    <h3 class="heading" id="签名算法和原理">
+  签名算法和原理
+  <a class="anchor" href="#%e7%ad%be%e5%90%8d%e7%ae%97%e6%b3%95%e5%92%8c%e5%8e%9f%e7%90%86">#</a>
+</h3>
+<p>以太坊使用椭圆曲线加密算法ECDSA来进行交易签名</p>
+<ul>
+<li>密钥生成：生成私钥和公钥，私钥用于签名，公钥用于验证签名</li>
+<li>交易签名：使用私钥对原始消息进行签名
+<ul>
+<li>对交易使用RLP（递归长度前缀编码）编码序列化</li>
+<li>使用keccka256哈希函数对编码后的交易进行计算</li>
+<li>使用私钥对哈希值进行签名，生成r、s、v值</li>
+</ul>
+</li>
+<li>签名验证：使用公钥以及原始消息来验证签名的有效性</li>
+</ul>
+<p>验证签名代码：</p>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">IsValidOrderSignature</span>(address <span style="font-weight:bold;text-decoration:underline">string</span>, message <span style="font-weight:bold;text-decoration:underline">string</span>, sign <span style="font-weight:bold;text-decoration:underline">string</span>) <span style="font-weight:bold;text-decoration:underline">bool</span> {
+</span></span><span style="display:flex;"><span>	ethMessage := []<span style="font-weight:bold;font-style:italic">byte</span>(<span style="color:#666;font-style:italic">&#34;\x19Ethereum Signed Message:\n&#34;</span> + strconv.<span style="color:#666;font-weight:bold;font-style:italic">Itoa</span>(<span style="font-weight:bold;font-style:italic">len</span>(message)) + message)
+</span></span><span style="display:flex;"><span>	hash := crypto.<span style="color:#666;font-weight:bold;font-style:italic">Keccak256</span>(ethMessage)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	sigBytes := hexutil.<span style="color:#666;font-weight:bold;font-style:italic">MustDecode</span>(sign)
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">if</span> sigBytes[64] == 27 || sigBytes[64] == 28 {
+</span></span><span style="display:flex;"><span>		sigBytes[64] -= 27
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	pubKey, err := crypto.<span style="color:#666;font-weight:bold;font-style:italic">SigToPub</span>(hash, sigBytes)
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">if</span> err != <span style="font-weight:bold;text-decoration:underline">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">return</span> <span style="font-weight:bold;text-decoration:underline">false</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	recAddress := crypto.<span style="color:#666;font-weight:bold;font-style:italic">PubkeyToAddress</span>(*pubKey)
+</span></span><span style="display:flex;"><span>	recStr := strings.<span style="color:#666;font-weight:bold;font-style:italic">ToLower</span>(recAddress.<span style="color:#666;font-weight:bold;font-style:italic">String</span>())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> recStr == strings.<span style="color:#666;font-weight:bold;font-style:italic">ToLower</span>(address)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div>
+    
+  </div>
+
+  
+
+  
+
+  
+  
+
+<div class="single-pagination">
+    <hr />
+
+    <div class="flex">
+
+        <div class="single-pagination-prev">
+            
+            <div class="single-pagination-container-prev">
+                <div class="single-pagination-text">←</div>
+                <div class="single-pagination-text">
+                    <a href="/posts/web3/p2p%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AFkad%E5%88%86%E5%B8%83%E5%BC%8F%E8%B7%AF%E7%94%B1%E8%A1%A8%E7%AE%97%E6%B3%95/">
+                        P2P核心技术：Kad分布式路由表算法
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="single-pagination-next">
+            
+            <div class="single-pagination-container-next">
+                <div class="single-pagination-text">
+                    <a href="/posts/golang/go%E5%86%85%E5%AD%98%E6%B1%A0%E5%AE%9E%E7%8E%B0/">
+                        go内存池实现
+                    </a>
+                </div>
+                <div class="single-pagination-text">→</div>
+            </div>
+            
+        </div>
+
+    </div>
+
+    <hr />
+</div>
+
+
+
+  
+
+  
+
+  
+  <div class="back-to-top">
+    <a href="#top">
+      back to top
+    </a>
+  </div>
+  
+
+</div>
+
+
+    </main>
+  </div>
+
+  <footer>
+    
+
+    
+    <p>Powered by
+        <a href="https://gohugo.io/">Hugo</a>
+        and
+        <a href="https://github.com/tomfran/typo">tomfran/typo</a>
+    </p>
+    
+    
+    
+
+
+  </footer>
+
+  
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body);"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false }
+      ]
+    });
+  });
+</script>
+  
+
+</body>
+
+<script src="/js/theme-switch.js"></script>
+<script defer src="/js/copy-code.js"></script>
+</html>

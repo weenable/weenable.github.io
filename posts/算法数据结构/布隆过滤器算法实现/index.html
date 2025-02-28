@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en-us"
+  dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+
+<link rel="icon" type="image/ico" href="https://weenable.github.io//favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://weenable.github.io//favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://weenable.github.io//favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://weenable.github.io//android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://weenable.github.io//apple-touch-icon.png">
+
+<meta name="description" content=""/>
+
+
+
+<title>
+    
+    布隆过滤器算法实现 | Ween&#39;s Blog
+    
+</title>
+
+<link rel="canonical" href="https://weenable.github.io/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E7%AE%97%E6%B3%95%E5%AE%9E%E7%8E%B0/"/>
+
+<meta property="og:url" content="https://weenable.github.io/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E7%AE%97%E6%B3%95%E5%AE%9E%E7%8E%B0/">
+  <meta property="og:site_name" content="Ween&#39;s Blog">
+  <meta property="og:title" content="布隆过滤器算法实现">
+  <meta property="og:description" content="实现原理 # 布隆过滤器由一个位数组（bit array）和多个哈希函数（hash functions）组成。其工作原理如下：
+初始化： 创建一个长度为 m 的位数组，将所有位初始化为 0。 选择 k 个独立的哈希函数，每个哈希函数将输入映射到 [0, m-1] 范围内的一个位置。 插入元素： 对于要插入的元素，通过 k 个哈希函数分别计算出 k 个哈希值。 将位数组中这 k 个位置的值设置为 1。 查询元素： 对于要查询的元素，通过 k 个哈希函数分别计算出 k 个哈希值。 检查位数组中这 k 个位置的值，如果所有位置的值都为 1，则认为该元素可能在集合中；如果有任何一个位置的值为 0，则认为该元素不在集合中。 代码实现 # package bloomfilter import ( &#34;hash/fnv&#34; &#34;math&#34; ) type BloomFilter struct { bitset []bool //比特数组 m int //比特数组长度 k int //哈希函数数量 } func NewBloomFilter(n int, p float64) *BloomFilter { m := int(math.Ceil(float64(-n) * math.Log(p) / math.Pow(math.Log(2), 2))) k := int(math.Ceil(math.Log(2) * float64(m) / float64(n))) return &amp;BloomFilter{ bitset: make([]bool, m), m: m, k: k, } } // 哈希函数 func (bf *BloomFilter) hash(data []byte, seed uint32) int { h := fnv.New32a() h.Write(data) hash := h.Sum32() return int((hash &#43; seed) % uint32(bf.m)) } // 添加元素 func (bf *BloomFilter) Add(item string) { for i := 0; i &lt; bf.k; i&#43;&#43; { pos := bf.hash([]byte(item), uint32(i)) bf.bitset[pos] = true } } // 查找元素 func (bf *BloomFilter) Contains(item string) bool { for i := 0; i &lt; bf.k; i&#43;&#43; { pos := bf.hash([]byte(item), uint32(i)) if !bf.bitset[pos] { return false } } return true }">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-02-28T19:01:03+08:00">
+    <meta property="article:modified_time" content="2025-02-28T19:01:03+08:00">
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/assets/combined.min.db1f6bdda2e5a4d5c9a316aa295aaeba691b0d6154397bbb6787fea95b273e6a.css" media="all">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+<body class="auto">
+
+  <div class="content">
+    <header>
+      
+
+<div class="header">
+
+    
+
+    <h1 class="header-title">
+        <a href="https://weenable.github.io/">Ween&#39;s Blog</a>
+    </h1>
+
+    <div class="flex">
+        
+
+        
+        
+      
+        <p class="small ">
+            <a href="/" >
+                /home
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/posts" >
+                /posts
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/categories" >
+                /categories
+            </a>
+        </p>
+        
+        
+    </div>
+
+    
+
+</div>
+
+    </header>
+
+    <main class="main">
+      
+
+
+
+
+
+
+
+<div  class="autonumber" >
+
+  <div class="single-intro-container">
+
+    
+
+    <h1 class="single-title">布隆过滤器算法实现</h1>
+    
+
+    
+
+    <p class="single-readtime">
+      
+      
+      
+      <time datetime="2025-02-28T19:01:03&#43;08:00">February 28, 2025</time>
+      
+
+      
+      &nbsp; · &nbsp;
+      1 min read
+      
+    </p>
+
+  </div>
+
+  
+
+  
+
+  
+  <aside class="toc">
+    <p><strong>Table of contents</strong></p>
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </aside>
+  
+
+  
+
+  <div class="single-content">
+    <h5 class="heading" id="实现原理">
+  实现原理
+  <a class="anchor" href="#%e5%ae%9e%e7%8e%b0%e5%8e%9f%e7%90%86">#</a>
+</h5>
+<p>布隆过滤器由一个位数组（bit array）和多个哈希函数（hash functions）组成。其工作原理如下：</p>
+<ol>
+<li><strong>初始化</strong>：
+<ul>
+<li>创建一个长度为 <code>m</code> 的位数组，将所有位初始化为 0。</li>
+<li>选择 <code>k</code> 个独立的哈希函数，每个哈希函数将输入映射到 <code>[0, m-1]</code> 范围内的一个位置。</li>
+</ul>
+</li>
+<li><strong>插入元素</strong>：
+<ul>
+<li>对于要插入的元素，通过 <code>k</code> 个哈希函数分别计算出 <code>k</code> 个哈希值。</li>
+<li>将位数组中这 <code>k</code> 个位置的值设置为 1。</li>
+</ul>
+</li>
+<li><strong>查询元素</strong>：
+<ul>
+<li>对于要查询的元素，通过 <code>k</code> 个哈希函数分别计算出 <code>k</code> 个哈希值。</li>
+<li>检查位数组中这 <code>k</code> 个位置的值，如果所有位置的值都为 1，则认为该元素可能在集合中；如果有任何一个位置的值为 0，则认为该元素不在集合中。</li>
+</ul>
+</li>
+</ol>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-2025228218354.png" src="images/%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E7%AE%97%E6%B3%95%E5%AE%9E%E7%8E%B0/image-2025228218354.png" >
+    </div>
+
+    
+</figure>
+</p>
+<h5 class="heading" id="代码实现">
+  代码实现
+  <a class="anchor" href="#%e4%bb%a3%e7%a0%81%e5%ae%9e%e7%8e%b0">#</a>
+</h5>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;text-decoration:underline">package</span> bloomfilter
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="font-weight:bold;text-decoration:underline">import</span> (
+</span></span><span style="display:flex;"><span>	<span style="color:#666;font-style:italic">&#34;hash/fnv&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#666;font-style:italic">&#34;math&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">type</span> BloomFilter <span style="font-weight:bold;font-style:italic;text-decoration:underline">struct</span> {
+</span></span><span style="display:flex;"><span>	bitset []<span style="font-weight:bold;text-decoration:underline">bool</span> <span style="color:#888;font-style:italic">//比特数组</span>
+</span></span><span style="display:flex;"><span>	m      <span style="font-weight:bold;text-decoration:underline">int</span>    <span style="color:#888;font-style:italic">//比特数组长度</span>
+</span></span><span style="display:flex;"><span>	k      <span style="font-weight:bold;text-decoration:underline">int</span>    <span style="color:#888;font-style:italic">//哈希函数数量</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">NewBloomFilter</span>(n <span style="font-weight:bold;text-decoration:underline">int</span>, p <span style="font-weight:bold;text-decoration:underline">float64</span>) *BloomFilter {
+</span></span><span style="display:flex;"><span>	m := <span style="font-weight:bold;font-style:italic">int</span>(math.<span style="color:#666;font-weight:bold;font-style:italic">Ceil</span>(<span style="font-weight:bold;font-style:italic">float64</span>(-n) * math.<span style="color:#666;font-weight:bold;font-style:italic">Log</span>(p) / math.<span style="color:#666;font-weight:bold;font-style:italic">Pow</span>(math.<span style="color:#666;font-weight:bold;font-style:italic">Log</span>(2), 2)))
+</span></span><span style="display:flex;"><span>	k := <span style="font-weight:bold;font-style:italic">int</span>(math.<span style="color:#666;font-weight:bold;font-style:italic">Ceil</span>(math.<span style="color:#666;font-weight:bold;font-style:italic">Log</span>(2) * <span style="font-weight:bold;font-style:italic">float64</span>(m) / <span style="font-weight:bold;font-style:italic">float64</span>(n)))
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> &amp;BloomFilter{
+</span></span><span style="display:flex;"><span>		bitset: <span style="font-weight:bold;font-style:italic">make</span>([]<span style="font-weight:bold;text-decoration:underline">bool</span>, m),
+</span></span><span style="display:flex;"><span>		m:      m,
+</span></span><span style="display:flex;"><span>		k:      k,
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#888;font-style:italic">// 哈希函数</span>
+</span></span><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> (bf *BloomFilter) <span style="color:#666;font-weight:bold;font-style:italic">hash</span>(data []<span style="font-weight:bold;text-decoration:underline">byte</span>, seed <span style="font-weight:bold;text-decoration:underline">uint32</span>) <span style="font-weight:bold;text-decoration:underline">int</span> {
+</span></span><span style="display:flex;"><span>	h := fnv.<span style="color:#666;font-weight:bold;font-style:italic">New32a</span>()
+</span></span><span style="display:flex;"><span>	h.<span style="color:#666;font-weight:bold;font-style:italic">Write</span>(data)
+</span></span><span style="display:flex;"><span>	hash := h.<span style="color:#666;font-weight:bold;font-style:italic">Sum32</span>()
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> <span style="font-weight:bold;font-style:italic">int</span>((hash + seed) % <span style="font-weight:bold;font-style:italic">uint32</span>(bf.m))
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#888;font-style:italic">// 添加元素</span>
+</span></span><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> (bf *BloomFilter) <span style="color:#666;font-weight:bold;font-style:italic">Add</span>(item <span style="font-weight:bold;text-decoration:underline">string</span>) {
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> i := 0; i &lt; bf.k; i++ {
+</span></span><span style="display:flex;"><span>		pos := bf.<span style="color:#666;font-weight:bold;font-style:italic">hash</span>([]<span style="font-weight:bold;font-style:italic">byte</span>(item), <span style="font-weight:bold;font-style:italic">uint32</span>(i))
+</span></span><span style="display:flex;"><span>		bf.bitset[pos] = <span style="font-weight:bold;text-decoration:underline">true</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#888;font-style:italic">// 查找元素</span>
+</span></span><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> (bf *BloomFilter) <span style="color:#666;font-weight:bold;font-style:italic">Contains</span>(item <span style="font-weight:bold;text-decoration:underline">string</span>) <span style="font-weight:bold;text-decoration:underline">bool</span> {
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">for</span> i := 0; i &lt; bf.k; i++ {
+</span></span><span style="display:flex;"><span>		pos := bf.<span style="color:#666;font-weight:bold;font-style:italic">hash</span>([]<span style="font-weight:bold;font-style:italic">byte</span>(item), <span style="font-weight:bold;font-style:italic">uint32</span>(i))
+</span></span><span style="display:flex;"><span>		<span style="font-weight:bold;text-decoration:underline">if</span> !bf.bitset[pos] {
+</span></span><span style="display:flex;"><span>			<span style="font-weight:bold;text-decoration:underline">return</span> <span style="font-weight:bold;text-decoration:underline">false</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> <span style="font-weight:bold;text-decoration:underline">true</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div>
+    
+  </div>
+
+  
+
+  
+
+  
+  
+
+<div class="single-pagination">
+    <hr />
+
+    <div class="flex">
+
+        <div class="single-pagination-prev">
+            
+            <div class="single-pagination-container-prev">
+                <div class="single-pagination-text">←</div>
+                <div class="single-pagination-text">
+                    <a href="/posts/web3/%E5%8C%BA%E5%9D%97%E9%93%BE%E7%9B%B8%E5%85%B3%E5%AE%9A%E4%B9%89%E5%92%8C%E6%A6%82%E5%BF%B5/">
+                        区块链相关定义和概念
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="single-pagination-next">
+            
+            <div class="single-pagination-container-next">
+                <div class="single-pagination-text">
+                    <a href="/posts/golang/%E5%AE%9E%E7%8E%B0redis%E5%AE%A2%E6%88%B7%E7%AB%AF%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C%E5%88%86%E7%89%87/">
+                        实现redis客户端一致性哈希分片
+                    </a>
+                </div>
+                <div class="single-pagination-text">→</div>
+            </div>
+            
+        </div>
+
+    </div>
+
+    <hr />
+</div>
+
+
+
+  
+
+  
+
+  
+  <div class="back-to-top">
+    <a href="#top">
+      back to top
+    </a>
+  </div>
+  
+
+</div>
+
+
+    </main>
+  </div>
+
+  <footer>
+    
+
+    
+    <p>Powered by
+        <a href="https://gohugo.io/">Hugo</a>
+        and
+        <a href="https://github.com/tomfran/typo">tomfran/typo</a>
+    </p>
+    
+    
+    
+
+
+  </footer>
+
+  
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body);"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false }
+      ]
+    });
+  });
+</script>
+  
+
+</body>
+
+<script src="/js/theme-switch.js"></script>
+<script defer src="/js/copy-code.js"></script>
+</html>

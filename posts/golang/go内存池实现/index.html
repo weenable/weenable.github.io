@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en-us"
+  dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+
+<link rel="icon" type="image/ico" href="https://weenable.github.io//favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://weenable.github.io//favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://weenable.github.io//favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://weenable.github.io//android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://weenable.github.io//apple-touch-icon.png">
+
+<meta name="description" content=""/>
+
+
+
+<title>
+    
+    go内存池实现 | Ween&#39;s Blog
+    
+</title>
+
+<link rel="canonical" href="https://weenable.github.io/posts/golang/go%E5%86%85%E5%AD%98%E6%B1%A0%E5%AE%9E%E7%8E%B0/"/>
+
+<meta property="og:url" content="https://weenable.github.io/posts/golang/go%E5%86%85%E5%AD%98%E6%B1%A0%E5%AE%9E%E7%8E%B0/">
+  <meta property="og:site_name" content="Ween&#39;s Blog">
+  <meta property="og:title" content="go内存池实现">
+  <meta property="og:description" content="实现 # 用于管理固定大小的字节切片（[]byte）。内存池的目的在于减少内存分配和垃圾回收的开销，通过重用已经分配的内存块来提高性能
+package main type MemoryPool chan []byte // 从内存池中返回长度为8的字节切片，如果内存池中没有可用字节切片则新分配 func (l MemoryPool) Borrow() []byte { var buf []byte select { case buf = &lt;-l: default: buf = make([]byte, 8) } return buf[:8] } // 将字节切片放回内存池 func (l MemoryPool) Return(buf []byte) { select { case l &lt;- buf: default: // 垃圾回收 } } func main() { var mp MemoryPool = make(chan []byte, 1024) sl := mp.Borrow() mp.Return(sl) }">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-02-28T18:57:27+08:00">
+    <meta property="article:modified_time" content="2025-02-28T18:57:27+08:00">
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/assets/combined.min.db1f6bdda2e5a4d5c9a316aa295aaeba691b0d6154397bbb6787fea95b273e6a.css" media="all">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+<body class="auto">
+
+  <div class="content">
+    <header>
+      
+
+<div class="header">
+
+    
+
+    <h1 class="header-title">
+        <a href="https://weenable.github.io/">Ween&#39;s Blog</a>
+    </h1>
+
+    <div class="flex">
+        
+
+        
+        
+      
+        <p class="small ">
+            <a href="/" >
+                /home
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/posts" >
+                /posts
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/categories" >
+                /categories
+            </a>
+        </p>
+        
+        
+    </div>
+
+    
+
+</div>
+
+    </header>
+
+    <main class="main">
+      
+
+
+
+
+
+
+
+<div  class="autonumber" >
+
+  <div class="single-intro-container">
+
+    
+
+    <h1 class="single-title">go内存池实现</h1>
+    
+
+    
+
+    <p class="single-readtime">
+      
+      
+      
+      <time datetime="2025-02-28T18:57:27&#43;08:00">February 28, 2025</time>
+      
+
+      
+      &nbsp; · &nbsp;
+      1 min read
+      
+    </p>
+
+  </div>
+
+  
+
+  
+
+  
+  <aside class="toc">
+    <p><strong>Table of contents</strong></p>
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </aside>
+  
+
+  
+
+  <div class="single-content">
+    <h5 class="heading" id="实现">
+  实现
+  <a class="anchor" href="#%e5%ae%9e%e7%8e%b0">#</a>
+</h5>
+<p>用于管理固定大小的字节切片（<code>[]byte</code>）。内存池的目的在于减少内存分配和垃圾回收的开销，通过重用已经分配的内存块来提高性能</p>
+<div class="highlight"><pre tabindex="0" style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="font-weight:bold;text-decoration:underline">package</span> main
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">type</span> MemoryPool <span style="font-weight:bold;font-style:italic;text-decoration:underline">chan</span> []<span style="font-weight:bold;text-decoration:underline">byte</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#888;font-style:italic">// 从内存池中返回长度为8的字节切片，如果内存池中没有可用字节切片则新分配</span>
+</span></span><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> (l MemoryPool) <span style="color:#666;font-weight:bold;font-style:italic">Borrow</span>() []<span style="font-weight:bold;text-decoration:underline">byte</span> {
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;font-style:italic;text-decoration:underline">var</span> buf []<span style="font-weight:bold;text-decoration:underline">byte</span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">select</span> {
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">case</span> buf = &lt;-l:
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">default</span>:
+</span></span><span style="display:flex;"><span>		buf = <span style="font-weight:bold;font-style:italic">make</span>([]<span style="font-weight:bold;text-decoration:underline">byte</span>, 8)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">return</span> buf[:8]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#888;font-style:italic">// 将字节切片放回内存池</span>
+</span></span><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> (l MemoryPool) <span style="color:#666;font-weight:bold;font-style:italic">Return</span>(buf []<span style="font-weight:bold;text-decoration:underline">byte</span>) {
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">select</span> {
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">case</span> l &lt;- buf:
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;text-decoration:underline">default</span>:
+</span></span><span style="display:flex;"><span>		<span style="color:#888;font-style:italic">// 垃圾回收</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="font-weight:bold;font-style:italic;text-decoration:underline">func</span> <span style="color:#666;font-weight:bold;font-style:italic">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="font-weight:bold;font-style:italic;text-decoration:underline">var</span> mp MemoryPool = <span style="font-weight:bold;font-style:italic">make</span>(<span style="font-weight:bold;font-style:italic;text-decoration:underline">chan</span> []<span style="font-weight:bold;text-decoration:underline">byte</span>, 1024)
+</span></span><span style="display:flex;"><span>	sl := mp.<span style="color:#666;font-weight:bold;font-style:italic">Borrow</span>()
+</span></span><span style="display:flex;"><span>	mp.<span style="color:#666;font-weight:bold;font-style:italic">Return</span>(sl)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div>
+    
+  </div>
+
+  
+
+  
+
+  
+  
+
+<div class="single-pagination">
+    <hr />
+
+    <div class="flex">
+
+        <div class="single-pagination-prev">
+            
+            <div class="single-pagination-container-prev">
+                <div class="single-pagination-text">←</div>
+                <div class="single-pagination-text">
+                    <a href="/posts/web3/%E4%BB%A5%E5%A4%AA%E5%9D%8A%E6%B6%88%E6%81%AF%E7%AD%BE%E5%90%8D/">
+                        以太坊消息签名
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="single-pagination-next">
+            
+            <div class="single-pagination-container-next">
+                <div class="single-pagination-text">
+                    <a href="/posts/web3/%E5%8C%BA%E5%9D%97%E9%93%BE%E7%9B%B8%E5%85%B3%E5%AE%9A%E4%B9%89%E5%92%8C%E6%A6%82%E5%BF%B5/">
+                        区块链相关定义和概念
+                    </a>
+                </div>
+                <div class="single-pagination-text">→</div>
+            </div>
+            
+        </div>
+
+    </div>
+
+    <hr />
+</div>
+
+
+
+  
+
+  
+
+  
+  <div class="back-to-top">
+    <a href="#top">
+      back to top
+    </a>
+  </div>
+  
+
+</div>
+
+
+    </main>
+  </div>
+
+  <footer>
+    
+
+    
+    <p>Powered by
+        <a href="https://gohugo.io/">Hugo</a>
+        and
+        <a href="https://github.com/tomfran/typo">tomfran/typo</a>
+    </p>
+    
+    
+    
+
+
+  </footer>
+
+  
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body);"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false }
+      ]
+    });
+  });
+</script>
+  
+
+</body>
+
+<script src="/js/theme-switch.js"></script>
+<script defer src="/js/copy-code.js"></script>
+</html>

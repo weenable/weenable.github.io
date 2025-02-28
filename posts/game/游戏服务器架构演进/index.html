@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en-us"
+  dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+
+<link rel="icon" type="image/ico" href="https://weenable.github.io//favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://weenable.github.io//favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://weenable.github.io//favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://weenable.github.io//android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://weenable.github.io//apple-touch-icon.png">
+
+<meta name="description" content=""/>
+
+
+
+<title>
+    
+    游戏服务器架构演进 | Ween&#39;s Blog
+    
+</title>
+
+<link rel="canonical" href="https://weenable.github.io/posts/game/%E6%B8%B8%E6%88%8F%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9E%B6%E6%9E%84%E6%BC%94%E8%BF%9B/"/>
+
+<meta property="og:url" content="https://weenable.github.io/posts/game/%E6%B8%B8%E6%88%8F%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9E%B6%E6%9E%84%E6%BC%94%E8%BF%9B/">
+  <meta property="og:site_name" content="Ween&#39;s Blog">
+  <meta property="og:title" content="游戏服务器架构演进">
+  <meta property="og:description" content="游戏服务器要素 # 对于游戏服务器，三个比较重要的部份就是：CPU、内存、带宽的设计
+逻辑架构：合适的进程、线程、协程的CPU调度方案，合适的同步或异步编程模型，分区分服或世界服的方式来提高服务器的承载量和稳定性 内存架构：合理使用内存，提高承载量，降低服务延迟 通信架构：通信协议如UDP/TCP 游戏服务器演进 # 一、弱交互游戏服务器 # 基于http通信模式的服务器，服务器架构和web差不多
+二、长连接游戏服务器 # 在长连接中玩家是有状态的，消息传送的频率以及速度都快于弱联网游戏
+第一代游戏服务器，单线程无阻塞 # 所有玩家的请求都发到一个无阻塞的消息队列中，由单线程处理消息
+线程模型如下：
+第二代游戏服务器，分区分服 # 单游戏服务器承载用户客户端有限，于是出现分区分服的概念，这种模型中一个游戏服务器就是一个平行世界，在第二代游戏服务器中同时也对进程和线程模型做了升级
+多线程：每个线程处理一个特定的场景内的tick事件，如果玩家跨场景则通过消息投递的方式通知另一个场景线程来进行玩家数据同步 多进程：将网络、数据库的操作单独使用进程来处理，逻辑进程专心处理逻辑任务 第三代游戏服务器，世界服 # 第三代游戏服务器主要是世界服，分为以下几种演化
+三层架构：包含网关服务器、游戏逻辑服务器、DB服务器 分片架构：将游戏逻辑服务器再进行分片，分离出如场景服务器、非场景服务器等 大世界架构：将世界按区块划分，各场景服务器管理不同区块 三、房间服务器，游戏大厅 # 主要分为大厅服务器、匹配服务器、对战服务器">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-02-28T19:21:10+08:00">
+    <meta property="article:modified_time" content="2025-02-28T19:21:10+08:00">
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/assets/combined.min.db1f6bdda2e5a4d5c9a316aa295aaeba691b0d6154397bbb6787fea95b273e6a.css" media="all">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+<body class="auto">
+
+  <div class="content">
+    <header>
+      
+
+<div class="header">
+
+    
+
+    <h1 class="header-title">
+        <a href="https://weenable.github.io/">Ween&#39;s Blog</a>
+    </h1>
+
+    <div class="flex">
+        
+
+        
+        
+      
+        <p class="small ">
+            <a href="/" >
+                /home
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/posts" >
+                /posts
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/categories" >
+                /categories
+            </a>
+        </p>
+        
+        
+    </div>
+
+    
+
+</div>
+
+    </header>
+
+    <main class="main">
+      
+
+
+
+
+
+
+
+<div  class="autonumber" >
+
+  <div class="single-intro-container">
+
+    
+
+    <h1 class="single-title">游戏服务器架构演进</h1>
+    
+
+    
+
+    <p class="single-readtime">
+      
+      
+      
+      <time datetime="2025-02-28T19:21:10&#43;08:00">February 28, 2025</time>
+      
+
+      
+      &nbsp; · &nbsp;
+      1 min read
+      
+    </p>
+
+  </div>
+
+  
+
+  
+
+  
+  <aside class="toc">
+    <p><strong>Table of contents</strong></p>
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#游戏服务器要素">游戏服务器要素</a></li>
+        <li><a href="#游戏服务器演进">游戏服务器演进</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </aside>
+  
+
+  
+
+  <div class="single-content">
+    <h3 class="heading" id="游戏服务器要素">
+  游戏服务器要素
+  <a class="anchor" href="#%e6%b8%b8%e6%88%8f%e6%9c%8d%e5%8a%a1%e5%99%a8%e8%a6%81%e7%b4%a0">#</a>
+</h3>
+<p>对于游戏服务器，三个比较重要的部份就是：CPU、内存、带宽的设计</p>
+<ul>
+<li>逻辑架构：合适的进程、线程、协程的CPU调度方案，合适的同步或异步编程模型，分区分服或世界服的方式来提高服务器的承载量和稳定性</li>
+<li>内存架构：合理使用内存，提高承载量，降低服务延迟</li>
+<li>通信架构：通信协议如UDP/TCP</li>
+</ul>
+<h3 class="heading" id="游戏服务器演进">
+  游戏服务器演进
+  <a class="anchor" href="#%e6%b8%b8%e6%88%8f%e6%9c%8d%e5%8a%a1%e5%99%a8%e6%bc%94%e8%bf%9b">#</a>
+</h3>
+<h4 class="heading" id="一弱交互游戏服务器">
+  一、弱交互游戏服务器
+  <a class="anchor" href="#%e4%b8%80%e5%bc%b1%e4%ba%a4%e4%ba%92%e6%b8%b8%e6%88%8f%e6%9c%8d%e5%8a%a1%e5%99%a8">#</a>
+</h4>
+<p>基于http通信模式的服务器，服务器架构和web差不多</p>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-2025228214121.png" src="images/%E6%B8%B8%E6%88%8F%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9E%B6%E6%9E%84%E6%BC%94%E8%BF%9B/image-2025228214121.png" >
+    </div>
+
+    
+</figure>
+</p>
+<h4 class="heading" id="二长连接游戏服务器">
+  二、长连接游戏服务器
+  <a class="anchor" href="#%e4%ba%8c%e9%95%bf%e8%bf%9e%e6%8e%a5%e6%b8%b8%e6%88%8f%e6%9c%8d%e5%8a%a1%e5%99%a8">#</a>
+</h4>
+<p>在长连接中玩家是有状态的，消息传送的频率以及速度都快于弱联网游戏</p>
+<h5 class="heading" id="第一代游戏服务器单线程无阻塞">
+  第一代游戏服务器，单线程无阻塞
+  <a class="anchor" href="#%e7%ac%ac%e4%b8%80%e4%bb%a3%e6%b8%b8%e6%88%8f%e6%9c%8d%e5%8a%a1%e5%99%a8%e5%8d%95%e7%ba%bf%e7%a8%8b%e6%97%a0%e9%98%bb%e5%a1%9e">#</a>
+</h5>
+<p>所有玩家的请求都发到一个无阻塞的消息队列中，由单线程处理消息</p>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-20252282212369.png" src="images/%E6%B8%B8%E6%88%8F%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9E%B6%E6%9E%84%E6%BC%94%E8%BF%9B/image-20252282212369.png" >
+    </div>
+
+    
+</figure>
+</p>
+<p>线程模型如下：</p>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-20252282223840.png" src="images/%E6%B8%B8%E6%88%8F%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9E%B6%E6%9E%84%E6%BC%94%E8%BF%9B/image-20252282223840.png" >
+    </div>
+
+    
+</figure>
+</p>
+<h5 class="heading" id="第二代游戏服务器分区分服">
+  第二代游戏服务器，分区分服
+  <a class="anchor" href="#%e7%ac%ac%e4%ba%8c%e4%bb%a3%e6%b8%b8%e6%88%8f%e6%9c%8d%e5%8a%a1%e5%99%a8%e5%88%86%e5%8c%ba%e5%88%86%e6%9c%8d">#</a>
+</h5>
+<p>单游戏服务器承载用户客户端有限，于是出现分区分服的概念，这种模型中一个游戏服务器就是一个平行世界，在第二代游戏服务器中同时也对进程和线程模型做了升级</p>
+<ul>
+<li>多线程：每个线程处理一个特定的场景内的tick事件，如果玩家跨场景则通过消息投递的方式通知另一个场景线程来进行玩家数据同步</li>
+<li>多进程：将网络、数据库的操作单独使用进程来处理，逻辑进程专心处理逻辑任务</li>
+</ul>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-20252282244672.png" src="images/%E6%B8%B8%E6%88%8F%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9E%B6%E6%9E%84%E6%BC%94%E8%BF%9B/image-20252282244672.png" >
+    </div>
+
+    
+</figure>
+</p>
+<h5 class="heading" id="第三代游戏服务器世界服">
+  第三代游戏服务器，世界服
+  <a class="anchor" href="#%e7%ac%ac%e4%b8%89%e4%bb%a3%e6%b8%b8%e6%88%8f%e6%9c%8d%e5%8a%a1%e5%99%a8%e4%b8%96%e7%95%8c%e6%9c%8d">#</a>
+</h5>
+<p>第三代游戏服务器主要是世界服，分为以下几种演化</p>
+<ul>
+<li>三层架构：包含网关服务器、游戏逻辑服务器、DB服务器</li>
+</ul>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-20252282257901.png" src="images/%E6%B8%B8%E6%88%8F%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9E%B6%E6%9E%84%E6%BC%94%E8%BF%9B/image-20252282257901.png" >
+    </div>
+
+    
+</figure>
+</p>
+<ul>
+<li>分片架构：将游戏逻辑服务器再进行分片，分离出如场景服务器、非场景服务器等</li>
+</ul>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-20252282311243.png" src="images/%E6%B8%B8%E6%88%8F%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9E%B6%E6%9E%84%E6%BC%94%E8%BF%9B/image-20252282311243.png" >
+    </div>
+
+    
+</figure>
+</p>
+<ul>
+<li>大世界架构：将世界按区块划分，各场景服务器管理不同区块</li>
+</ul>
+<h4 class="heading" id="三房间服务器游戏大厅">
+  三、房间服务器，游戏大厅
+  <a class="anchor" href="#%e4%b8%89%e6%88%bf%e9%97%b4%e6%9c%8d%e5%8a%a1%e5%99%a8%e6%b8%b8%e6%88%8f%e5%a4%a7%e5%8e%85">#</a>
+</h4>
+<p>主要分为大厅服务器、匹配服务器、对战服务器</p>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-20252282323894.png" src="images/%E6%B8%B8%E6%88%8F%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9E%B6%E6%9E%84%E6%BC%94%E8%BF%9B/image-20252282323894.png" >
+    </div>
+
+    
+</figure>
+</p>
+
+    
+  </div>
+
+  
+
+  
+
+  
+  
+
+<div class="single-pagination">
+    <hr />
+
+    <div class="flex">
+
+        <div class="single-pagination-prev">
+            
+            <div class="single-pagination-container-prev">
+                <div class="single-pagination-text">←</div>
+                <div class="single-pagination-text">
+                    <a href="/posts/%E6%9E%B6%E6%9E%84/%E5%9F%BA%E4%BA%8Eredis%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0/">
+                        基于redis的分布式锁实现
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="single-pagination-next">
+            
+            <div class="single-pagination-container-next">
+                <div class="single-pagination-text">
+                    <a href="/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE%E7%AE%97%E6%B3%95%E6%B1%87%E6%80%BB/">
+                        二分查找算法汇总
+                    </a>
+                </div>
+                <div class="single-pagination-text">→</div>
+            </div>
+            
+        </div>
+
+    </div>
+
+    <hr />
+</div>
+
+
+
+  
+
+  
+
+  
+  <div class="back-to-top">
+    <a href="#top">
+      back to top
+    </a>
+  </div>
+  
+
+</div>
+
+
+    </main>
+  </div>
+
+  <footer>
+    
+
+    
+    <p>Powered by
+        <a href="https://gohugo.io/">Hugo</a>
+        and
+        <a href="https://github.com/tomfran/typo">tomfran/typo</a>
+    </p>
+    
+    
+    
+
+
+  </footer>
+
+  
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body);"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false }
+      ]
+    });
+  });
+</script>
+  
+
+</body>
+
+<script src="/js/theme-switch.js"></script>
+<script defer src="/js/copy-code.js"></script>
+</html>

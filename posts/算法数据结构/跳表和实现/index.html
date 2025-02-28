@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en-us"
+  dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+
+<link rel="icon" type="image/ico" href="https://weenable.github.io//favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://weenable.github.io//favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://weenable.github.io//favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://weenable.github.io//android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://weenable.github.io//apple-touch-icon.png">
+
+<meta name="description" content=""/>
+
+
+
+<title>
+    
+    跳表和实现 | Ween&#39;s Blog
+    
+</title>
+
+<link rel="canonical" href="https://weenable.github.io/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E8%B7%B3%E8%A1%A8%E5%92%8C%E5%AE%9E%E7%8E%B0/"/>
+
+<meta property="og:url" content="https://weenable.github.io/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E8%B7%B3%E8%A1%A8%E5%92%8C%E5%AE%9E%E7%8E%B0/">
+  <meta property="og:site_name" content="Ween&#39;s Blog">
+  <meta property="og:title" content="跳表和实现">
+  <meta property="og:description" content="数据结构示意图 # 代码实现 # package main import &#34;math/rand&#34; const ( MaxLevel = 16 // 跳表的最大层数 Probability = 0.5 // 随机提升层数的概率 ) type SkipList struct { head *Node level int } type Node struct { key int value string next []*Node } func randomLevel() int { level := 1 for rand.Float64() &lt; Probability &amp;&amp; level &lt; MaxLevel { level&#43;&#43; } return level } func NewSkipList() *SkipList { return &amp;SkipList{ head: NewNode(0, &#34;&#34;, MaxLevel), level: 1, } } func NewNode(key int, value string, level int) *Node { return &amp;Node{ key: key, value: value, next: make([]*Node, level), } } // 插入元素 func (sl *SkipList) Insert(key int, value string) { update := make([]*Node, MaxLevel) node := sl.head // 找到每一层最后一个&lt;key的节点放入update中 for i := sl.level - 1; i &gt;= 0; i-- { for node.next[i] != nil &amp;&amp; node.next[i].key &lt; key { node = node.next[i] } update[i] = node } // 随机层数 level := randomLevel() // 将&gt;sl.level的层，sl.head加入update中 if level &gt; sl.level { for i := sl.level; i &lt; level; i&#43;&#43; { update[i] = sl.head } sl.level = level } // 将新节点加入跳表 newNode := NewNode(key, value, level) for i := 0; i &lt; level; i&#43;&#43; { newNode.next[i] = update[i].next[i] update[i].next[i] = newNode } } // 查找元素 func (sl *SkipList) Search(key int) (string, bool) { // 从最高层开始往下，找到最后一个比key小的节点 node := sl.head for i := sl.level - 1; i &gt;= 0; i-- { for node.next[i] != nil &amp;&amp; node.next[i].key &lt; key { node = node.next[i] } } node = node.next[0] if node != nil &amp;&amp; node.key == key { return node.value, true } return &#34;&#34;, false } // 删除元素 func (sl *SkipList) Delete(key int) bool { update := make([]*Node, MaxLevel) // 从最高层开始往下，找到最后一个比key小的节点 node := sl.head for i := sl.level; i &gt;= 0; i-- { for node.next[i] != nil &amp;&amp; node.next[i].key &lt; key { node = node.next[i] } update[i] = node } // 判断元素是否存在 node = node.next[0] if node == nil || node.key != key { return false } // 从第1层开始往上，剔除目标节点 for i := 0; i &lt; sl.level; i&#43;&#43; { if update[i].next[i] != node { break } update[i].next[i] = node.next[i] } // 如果高层除了头节点没有多余节点，则降层 for sl.level &gt; 1 &amp;&amp; sl.head.next[sl.level-1] == nil { sl.level-- } return true } func main() { sl := skiplist.NewSkipList() sl.Insert(1, &#34;Hello&#34;) sl.Insert(2, &#34;World&#34;) sl.Insert(3, &#34;SkipList&#34;) if value, found := sl.Search(2); found { fmt.Println(&#34;Found key 2 with value:&#34;, value) } else { fmt.Println(&#34;Key 2 not found&#34;) } sl.Delete(2) if value, found := sl.Search(2); found { fmt.Println(&#34;Found key 2 with value:&#34;, value) } else { fmt.Println(&#34;Key 2 not found&#34;) } }">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-02-28T19:07:07+08:00">
+    <meta property="article:modified_time" content="2025-02-28T19:07:07+08:00">
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/assets/combined.min.db1f6bdda2e5a4d5c9a316aa295aaeba691b0d6154397bbb6787fea95b273e6a.css" media="all">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+<body class="auto">
+
+  <div class="content">
+    <header>
+      
+
+<div class="header">
+
+    
+
+    <h1 class="header-title">
+        <a href="https://weenable.github.io/">Ween&#39;s Blog</a>
+    </h1>
+
+    <div class="flex">
+        
+
+        
+        
+      
+        <p class="small ">
+            <a href="/" >
+                /home
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/posts" >
+                /posts
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/categories" >
+                /categories
+            </a>
+        </p>
+        
+        
+    </div>
+
+    
+
+</div>
+
+    </header>
+
+    <main class="main">
+      
+
+
+
+
+
+
+
+<div  class="autonumber" >
+
+  <div class="single-intro-container">
+
+    
+
+    <h1 class="single-title">跳表和实现</h1>
+    
+
+    
+
+    <p class="single-readtime">
+      
+      
+      
+      <time datetime="2025-02-28T19:07:07&#43;08:00">February 28, 2025</time>
+      
+
+      
+      &nbsp; · &nbsp;
+      2 min read
+      
+    </p>
+
+  </div>
+
+  
+
+  
+
+  
+  <aside class="toc">
+    <p><strong>Table of contents</strong></p>
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </aside>
+  
+
+  
+
+  <div class="single-content">
+    <h5 class="heading" id="数据结构示意图">
+  数据结构示意图
+  <a class="anchor" href="#%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84%e7%a4%ba%e6%84%8f%e5%9b%be">#</a>
+</h5>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-2025228725321.png" src="images/%E8%B7%B3%E8%A1%A8%E5%92%8C%E5%AE%9E%E7%8E%B0/image-2025228725321.png" >
+    </div>
+
+    
+</figure>
+</p>
+<h5 class="heading" id="代码实现">
+  代码实现
+  <a class="anchor" href="#%e4%bb%a3%e7%a0%81%e5%ae%9e%e7%8e%b0">#</a>
+</h5>
+<pre tabindex="0"><code>package main
+
+import &#34;math/rand&#34;
+
+const (
+	MaxLevel    = 16  // 跳表的最大层数
+	Probability = 0.5 // 随机提升层数的概率
+)
+
+type SkipList struct {
+	head  *Node
+	level int
+}
+
+type Node struct {
+	key   int
+	value string
+	next  []*Node
+}
+
+func randomLevel() int {
+	level := 1
+	for rand.Float64() &lt; Probability &amp;&amp; level &lt; MaxLevel {
+		level++
+	}
+	return level
+}
+
+func NewSkipList() *SkipList {
+	return &amp;SkipList{
+		head:  NewNode(0, &#34;&#34;, MaxLevel),
+		level: 1,
+	}
+}
+
+func NewNode(key int, value string, level int) *Node {
+	return &amp;Node{
+		key:   key,
+		value: value,
+		next:  make([]*Node, level),
+	}
+}
+
+// 插入元素
+func (sl *SkipList) Insert(key int, value string) {
+	update := make([]*Node, MaxLevel)
+	node := sl.head
+
+	// 找到每一层最后一个&lt;key的节点放入update中
+	for i := sl.level - 1; i &gt;= 0; i-- {
+		for node.next[i] != nil &amp;&amp; node.next[i].key &lt; key {
+			node = node.next[i]
+		}
+		update[i] = node
+	}
+
+	// 随机层数
+	level := randomLevel()
+	// 将&gt;sl.level的层，sl.head加入update中
+	if level &gt; sl.level {
+		for i := sl.level; i &lt; level; i++ {
+			update[i] = sl.head
+		}
+		sl.level = level
+	}
+
+	// 将新节点加入跳表
+	newNode := NewNode(key, value, level)
+	for i := 0; i &lt; level; i++ {
+		newNode.next[i] = update[i].next[i]
+		update[i].next[i] = newNode
+	}
+}
+
+// 查找元素
+func (sl *SkipList) Search(key int) (string, bool) {
+	// 从最高层开始往下，找到最后一个比key小的节点
+	node := sl.head
+	for i := sl.level - 1; i &gt;= 0; i-- {
+		for node.next[i] != nil &amp;&amp; node.next[i].key &lt; key {
+			node = node.next[i]
+		}
+	}
+
+	node = node.next[0]
+	if node != nil &amp;&amp; node.key == key {
+		return node.value, true
+	}
+
+	return &#34;&#34;, false
+}
+
+// 删除元素
+func (sl *SkipList) Delete(key int) bool {
+	update := make([]*Node, MaxLevel)
+
+	// 从最高层开始往下，找到最后一个比key小的节点
+	node := sl.head
+	for i := sl.level; i &gt;= 0; i-- {
+		for node.next[i] != nil &amp;&amp; node.next[i].key &lt; key {
+			node = node.next[i]
+		}
+		update[i] = node
+	}
+
+	// 判断元素是否存在
+	node = node.next[0]
+	if node == nil || node.key != key {
+		return false
+	}
+
+	// 从第1层开始往上，剔除目标节点
+	for i := 0; i &lt; sl.level; i++ {
+		if update[i].next[i] != node {
+			break
+		}
+		update[i].next[i] = node.next[i]
+	}
+
+	// 如果高层除了头节点没有多余节点，则降层
+	for sl.level &gt; 1 &amp;&amp; sl.head.next[sl.level-1] == nil {
+		sl.level--
+	}
+
+	return true
+}
+
+func main() {
+	sl := skiplist.NewSkipList()
+	sl.Insert(1, &#34;Hello&#34;)
+	sl.Insert(2, &#34;World&#34;)
+	sl.Insert(3, &#34;SkipList&#34;)
+
+	if value, found := sl.Search(2); found {
+		fmt.Println(&#34;Found key 2 with value:&#34;, value)
+	} else {
+		fmt.Println(&#34;Key 2 not found&#34;)
+	}
+
+	sl.Delete(2)
+	if value, found := sl.Search(2); found {
+		fmt.Println(&#34;Found key 2 with value:&#34;, value)
+	} else {
+		fmt.Println(&#34;Key 2 not found&#34;)
+	}
+
+}
+</code></pre>
+    
+  </div>
+
+  
+
+  
+
+  
+  
+
+<div class="single-pagination">
+    <hr />
+
+    <div class="flex">
+
+        <div class="single-pagination-prev">
+            
+            <div class="single-pagination-container-prev">
+                <div class="single-pagination-text">←</div>
+                <div class="single-pagination-text">
+                    <a href="/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%93%88%E5%B8%8C%E8%A1%A8%E6%B8%90%E8%BF%9B%E5%BC%8Frehash%E5%AE%9E%E7%8E%B0/">
+                        哈希表渐进式Rehash实现
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="single-pagination-next">
+            
+            <div class="single-pagination-container-next">
+                <div class="single-pagination-text">
+                    <a href="/posts/game/%E7%BD%91%E7%BB%9C%E6%B8%B8%E6%88%8F%E5%90%8C%E6%AD%A5%E6%9C%BA%E5%88%B6/">
+                        网络游戏同步机制
+                    </a>
+                </div>
+                <div class="single-pagination-text">→</div>
+            </div>
+            
+        </div>
+
+    </div>
+
+    <hr />
+</div>
+
+
+
+  
+
+  
+
+  
+  <div class="back-to-top">
+    <a href="#top">
+      back to top
+    </a>
+  </div>
+  
+
+</div>
+
+
+    </main>
+  </div>
+
+  <footer>
+    
+
+    
+    <p>Powered by
+        <a href="https://gohugo.io/">Hugo</a>
+        and
+        <a href="https://github.com/tomfran/typo">tomfran/typo</a>
+    </p>
+    
+    
+    
+
+
+  </footer>
+
+  
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body);"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false }
+      ]
+    });
+  });
+</script>
+  
+
+</body>
+
+<script src="/js/theme-switch.js"></script>
+<script defer src="/js/copy-code.js"></script>
+</html>

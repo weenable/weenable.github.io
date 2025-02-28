@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en-us"
+  dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+
+<link rel="icon" type="image/ico" href="https://weenable.github.io//favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://weenable.github.io//favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://weenable.github.io//favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://weenable.github.io//android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://weenable.github.io//apple-touch-icon.png">
+
+<meta name="description" content=""/>
+
+
+
+<title>
+    
+    网络游戏同步机制 | Ween&#39;s Blog
+    
+</title>
+
+<link rel="canonical" href="https://weenable.github.io/posts/game/%E7%BD%91%E7%BB%9C%E6%B8%B8%E6%88%8F%E5%90%8C%E6%AD%A5%E6%9C%BA%E5%88%B6/"/>
+
+<meta property="og:url" content="https://weenable.github.io/posts/game/%E7%BD%91%E7%BB%9C%E6%B8%B8%E6%88%8F%E5%90%8C%E6%AD%A5%E6%9C%BA%E5%88%B6/">
+  <meta property="og:site_name" content="Ween&#39;s Blog">
+  <meta property="og:title" content="网络游戏同步机制">
+  <meta property="og:description" content="网络同步 # 网络同步 = 数据同步 &#43; 表现同步 网络同步一般分为帧同步和状态同步
+帧同步 # 基本原理 # 计算逻辑在客户端，按照一定的帧速率（逻辑帧而非渲染帧），服务端只转发
+帧同步缺陷 # 计算逻辑不在服务端，容易出现外挂 严格帧锁定同步网络差的客户端会影响其他玩家体验（乐观帧锁定同步） 不同客户端浮点数精度问题、随机值不统一 乐观帧锁定 # 传统严格帧锁定算法会出现慢网影响其他人的情况，此时可以采用定时不等待的方式，服务端以固定帧率同步数据，不依赖每个玩家是否有操作
+状态同步 # 基本原理 # 计算逻辑在服务端，客户端只表现。状态同步一般都应用RPC调用和增量同步技术
+状态同步缺陷 # 延迟过大、服务端压力大 状态同步做回放系统较麻烦 网络协议 # 一些基础 # TCP是流式传输没有固定内容边界，会出现拆包和沾包问题，UDP基于报文有消息边界，不存在拆包沾包问题 TCP默认情况下使用Nagle算法，可以优化传输减少网络里的小包数量，传输时协议栈会累积数据直到满足以下条件之一 积累的数量达到最大MSS 收到一个ACK TCp默认情况下使用延迟累积ACK发送机制，传输时协议栈会合并多个ACK发送，提高网络性能，直到满足一下条件之一 累积多个ACK或有数据传输时 ACK超时（40ms） TCP可以使用TCP_NODELAY来关闭Nagle算法 网络协议方案 # 可以默认使用TCP，然后再打开使用KCP 在网络状态较好时可以使用KCP，当出现大量丢包时切换使用TCP
+同步优化方案 # 表现优化 # 表现优化主要是想弱化玩家对于延迟的感受，主要分为以下一些优化技术
+1.插值优化 # https://zhuanlan.zhihu.com/p/631954987?utm_id=0 状态同步中，由于客户端每次收到都是其他角色的位置信息，为了避免位置突变，客户端会使用插值技术而不是跳帧
+内插值目的是解决客户端离散信息更新导致的突变问题，通过线性插值Lerp插入过渡数据 收到数据包时不能直接应用，必须等到下一个数据包到来才能开始插值，延迟增加 运动状态发生剧烈变化时，会丢失部份运动状态">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-02-28T19:08:15+08:00">
+    <meta property="article:modified_time" content="2025-02-28T19:08:15+08:00">
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/assets/combined.min.db1f6bdda2e5a4d5c9a316aa295aaeba691b0d6154397bbb6787fea95b273e6a.css" media="all">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+<body class="auto">
+
+  <div class="content">
+    <header>
+      
+
+<div class="header">
+
+    
+
+    <h1 class="header-title">
+        <a href="https://weenable.github.io/">Ween&#39;s Blog</a>
+    </h1>
+
+    <div class="flex">
+        
+
+        
+        
+      
+        <p class="small ">
+            <a href="/" >
+                /home
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/posts" >
+                /posts
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/categories" >
+                /categories
+            </a>
+        </p>
+        
+        
+    </div>
+
+    
+
+</div>
+
+    </header>
+
+    <main class="main">
+      
+
+
+
+
+
+
+
+<div  class="autonumber" >
+
+  <div class="single-intro-container">
+
+    
+
+    <h1 class="single-title">网络游戏同步机制</h1>
+    
+
+    
+
+    <p class="single-readtime">
+      
+      
+      
+      <time datetime="2025-02-28T19:08:15&#43;08:00">February 28, 2025</time>
+      
+
+      
+      &nbsp; · &nbsp;
+      1 min read
+      
+    </p>
+
+  </div>
+
+  
+
+  
+
+  
+  <aside class="toc">
+    <p><strong>Table of contents</strong></p>
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#网络同步">网络同步</a></li>
+        <li><a href="#同步优化方案">同步优化方案</a></li>
+        <li><a href="#资料参考">资料参考</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </aside>
+  
+
+  
+
+  <div class="single-content">
+    <h3 class="heading" id="网络同步">
+  网络同步
+  <a class="anchor" href="#%e7%bd%91%e7%bb%9c%e5%90%8c%e6%ad%a5">#</a>
+</h3>
+<p>网络同步 = 数据同步 + 表现同步
+网络同步一般分为帧同步和状态同步</p>
+<h4 class="heading" id="帧同步">
+  帧同步
+  <a class="anchor" href="#%e5%b8%a7%e5%90%8c%e6%ad%a5">#</a>
+</h4>
+<h5 class="heading" id="基本原理">
+  基本原理
+  <a class="anchor" href="#%e5%9f%ba%e6%9c%ac%e5%8e%9f%e7%90%86">#</a>
+</h5>
+<p>计算逻辑在客户端，按照一定的帧速率（逻辑帧而非渲染帧），服务端只转发</p>
+<h5 class="heading" id="帧同步缺陷">
+  帧同步缺陷
+  <a class="anchor" href="#%e5%b8%a7%e5%90%8c%e6%ad%a5%e7%bc%ba%e9%99%b7">#</a>
+</h5>
+<ul>
+<li>计算逻辑不在服务端，容易出现外挂</li>
+<li>严格帧锁定同步网络差的客户端会影响其他玩家体验（乐观帧锁定同步）</li>
+<li>不同客户端浮点数精度问题、随机值不统一</li>
+</ul>
+<h5 class="heading" id="乐观帧锁定">
+  乐观帧锁定
+  <a class="anchor" href="#%e4%b9%90%e8%a7%82%e5%b8%a7%e9%94%81%e5%ae%9a">#</a>
+</h5>
+<p>传统严格帧锁定算法会出现慢网影响其他人的情况，此时可以采用定时不等待的方式，服务端以固定帧率同步数据，不依赖每个玩家是否有操作</p>
+<h4 class="heading" id="状态同步">
+  状态同步
+  <a class="anchor" href="#%e7%8a%b6%e6%80%81%e5%90%8c%e6%ad%a5">#</a>
+</h4>
+<h5 class="heading" id="基本原理-1">
+  基本原理
+  <a class="anchor" href="#%e5%9f%ba%e6%9c%ac%e5%8e%9f%e7%90%86-1">#</a>
+</h5>
+<p>计算逻辑在服务端，客户端只表现。状态同步一般都应用RPC调用和增量同步技术</p>
+<h5 class="heading" id="状态同步缺陷">
+  状态同步缺陷
+  <a class="anchor" href="#%e7%8a%b6%e6%80%81%e5%90%8c%e6%ad%a5%e7%bc%ba%e9%99%b7">#</a>
+</h5>
+<ul>
+<li>延迟过大、服务端压力大</li>
+<li>状态同步做回放系统较麻烦</li>
+</ul>
+<h4 class="heading" id="网络协议">
+  网络协议
+  <a class="anchor" href="#%e7%bd%91%e7%bb%9c%e5%8d%8f%e8%ae%ae">#</a>
+</h4>
+<h5 class="heading" id="一些基础">
+  一些基础
+  <a class="anchor" href="#%e4%b8%80%e4%ba%9b%e5%9f%ba%e7%a1%80">#</a>
+</h5>
+<ul>
+<li>TCP是流式传输没有固定内容边界，会出现拆包和沾包问题，UDP基于报文有消息边界，不存在拆包沾包问题</li>
+<li>TCP默认情况下使用Nagle算法，可以优化传输减少网络里的小包数量，传输时协议栈会累积数据直到满足以下条件之一
+<ul>
+<li>积累的数量达到最大MSS</li>
+<li>收到一个ACK</li>
+</ul>
+</li>
+<li>TCp默认情况下使用延迟累积ACK发送机制，传输时协议栈会合并多个ACK发送，提高网络性能，直到满足一下条件之一
+<ul>
+<li>累积多个ACK或有数据传输时</li>
+<li>ACK超时（40ms）</li>
+</ul>
+</li>
+<li>TCP可以使用<strong>TCP_NODELAY</strong>来关闭Nagle算法</li>
+</ul>
+<h5 class="heading" id="网络协议方案">
+  网络协议方案
+  <a class="anchor" href="#%e7%bd%91%e7%bb%9c%e5%8d%8f%e8%ae%ae%e6%96%b9%e6%a1%88">#</a>
+</h5>
+<p>可以默认使用TCP，然后再打开使用KCP
+在网络状态较好时可以使用KCP，当出现大量丢包时切换使用TCP</p>
+<h3 class="heading" id="同步优化方案">
+  同步优化方案
+  <a class="anchor" href="#%e5%90%8c%e6%ad%a5%e4%bc%98%e5%8c%96%e6%96%b9%e6%a1%88">#</a>
+</h3>
+<h4 class="heading" id="表现优化">
+  表现优化
+  <a class="anchor" href="#%e8%a1%a8%e7%8e%b0%e4%bc%98%e5%8c%96">#</a>
+</h4>
+<p>表现优化主要是想弱化玩家对于延迟的感受，主要分为以下一些优化技术</p>
+<h5 class="heading" id="1插值优化">
+  1.插值优化
+  <a class="anchor" href="#1%e6%8f%92%e5%80%bc%e4%bc%98%e5%8c%96">#</a>
+</h5>
+<p><a href="https://zhuanlan.zhihu.com/p/631954987?utm_id=0">https://zhuanlan.zhihu.com/p/631954987?utm_id=0</a>
+状态同步中，由于客户端每次收到都是其他角色的位置信息，为了避免位置突变，客户端会使用插值技术而不是跳帧</p>
+<ul>
+<li>内插值目的是解决客户端离散信息更新导致的突变问题，通过线性插值Lerp插入过渡数据
+<ul>
+<li>收到数据包时不能直接应用，必须等到下一个数据包到来才能开始插值，延迟增加</li>
+<li>运动状态发生剧烈变化时，会丢失部份运动状态</li>
+</ul>
+</li>
+</ul>
+<p>
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-2025228102431.png" src="https://pic4.zhimg.com/v2-3fea56f86c6bffa3d32ae1681fe9ad73_b.webp" >
+    </div>
+
+    
+</figure>
+</p>
+<ul>
+<li>外插值目的是解决网络延迟过大或抖动导致间隙性收不到数据的卡顿问题，通过额外同步线速度、角速度、加速度和网络延迟等数据，在收到包时直接推测下一个数据包的状态
+<ul>
+<li>如何判断外插值预测结果的正确性？</li>
+<li>如何从错误的预测结果平滑过渡到正确的运动状态
+
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-2025228102431.png" src="https://pic2.zhimg.com/v2-7f440b970fbc0ea086e930ad3ffae781_b.webp" >
+    </div>
+
+    
+</figure>
+</li>
+</ul>
+</li>
+</ul>
+<h5 class="heading" id="2预表现和回滚">
+  2.预表现和回滚
+  <a class="anchor" href="#2%e9%a2%84%e8%a1%a8%e7%8e%b0%e5%92%8c%e5%9b%9e%e6%bb%9a">#</a>
+</h5>
+<p>预测的目的是让玩家输入后立刻得到反馈，提高游戏体验，回滚是保证服务器的权威性
+玩家本地执行的记录通过move_buffer存储，在收到服务器的数据时</p>
+<ul>
+<li>如果本地和服务器一致，则客户端清理move_buffer</li>
+<li>如果本地和服务器不一致，则需要本地回滚到服务器指定位置，把错误时刻后面的move_buffer数据再执行一遍
+
+
+
+
+
+
+
+
+
+
+
+
+<figure class="">
+
+    <div>
+        <img loading="lazy" alt="image-20252281226618.png" src="images/%E7%BD%91%E7%BB%9C%E6%B8%B8%E6%88%8F%E5%90%8C%E6%AD%A5%E6%9C%BA%E5%88%B6/image-20252281226618.png" >
+    </div>
+
+    
+</figure>
+</li>
+</ul>
+<h4 class="heading" id="延迟对抗">
+  延迟对抗
+  <a class="anchor" href="#%e5%bb%b6%e8%bf%9f%e5%af%b9%e6%8a%97">#</a>
+</h4>
+<p>用于弱化玩家对延迟的感受，主要有以下一些技术</p>
+<h5 class="heading" id="1延迟补偿">
+  1.延迟补偿
+  <a class="anchor" href="#1%e5%bb%b6%e8%bf%9f%e8%a1%a5%e5%81%bf">#</a>
+</h5>
+<p>用于弥补客户端到服务端同步的技术，核心是服务器在指定时刻对玩家角色进行位置回滚和计算
+实现方式：服务器会定时记录所有玩家的位置，假设客户端到服务端的延迟为xms服务端收到客户端的操作后，服务器使用记录的xms前所有玩机的位置来计算是否命中，从而抵消延迟带来的问题</p>
+<p>缺陷：不适合ACT网游</p>
+<h4 class="heading" id="带宽优化">
+  带宽优化
+  <a class="anchor" href="#%e5%b8%a6%e5%ae%bd%e4%bc%98%e5%8c%96">#</a>
+</h4>
+<h5 class="heading" id="1对象裁剪">
+  1.对象裁剪
+  <a class="anchor" href="#1%e5%af%b9%e8%b1%a1%e8%a3%81%e5%89%aa">#</a>
+</h5>
+<ul>
+<li>AOI算法</li>
+</ul>
+<h5 class="heading" id="2增量状态快照">
+  2.增量状态快照
+  <a class="anchor" href="#2%e5%a2%9e%e9%87%8f%e7%8a%b6%e6%80%81%e5%bf%ab%e7%85%a7">#</a>
+</h5>
+<h3 class="heading" id="资料参考">
+  资料参考
+  <a class="anchor" href="#%e8%b5%84%e6%96%99%e5%8f%82%e8%80%83">#</a>
+</h3>
+<p><a href="https://zhuanlan.zhihu.com/p/105040792">https://zhuanlan.zhihu.com/p/105040792</a>
+<a href="https://www.skywind.me/blog/archives/1343">https://www.skywind.me/blog/archives/1343</a>
+<a href="https://zhuanlan.zhihu.com/p/357973435">https://zhuanlan.zhihu.com/p/357973435</a></p>
+
+    
+  </div>
+
+  
+
+  
+
+  
+  
+
+<div class="single-pagination">
+    <hr />
+
+    <div class="flex">
+
+        <div class="single-pagination-prev">
+            
+            <div class="single-pagination-container-prev">
+                <div class="single-pagination-text">←</div>
+                <div class="single-pagination-text">
+                    <a href="/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E8%B7%B3%E8%A1%A8%E5%92%8C%E5%AE%9E%E7%8E%B0/">
+                        跳表和实现
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="single-pagination-next">
+            
+            <div class="single-pagination-container-next">
+                <div class="single-pagination-text">
+                    <a href="/posts/%E6%9E%B6%E6%9E%84/%E5%9C%A8%E7%BA%BF%E6%94%AF%E4%BB%98%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/">
+                        在线支付系统设计
+                    </a>
+                </div>
+                <div class="single-pagination-text">→</div>
+            </div>
+            
+        </div>
+
+    </div>
+
+    <hr />
+</div>
+
+
+
+  
+
+  
+
+  
+  <div class="back-to-top">
+    <a href="#top">
+      back to top
+    </a>
+  </div>
+  
+
+</div>
+
+
+    </main>
+  </div>
+
+  <footer>
+    
+
+    
+    <p>Powered by
+        <a href="https://gohugo.io/">Hugo</a>
+        and
+        <a href="https://github.com/tomfran/typo">tomfran/typo</a>
+    </p>
+    
+    
+    
+
+
+  </footer>
+
+  
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body);"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false }
+      ]
+    });
+  });
+</script>
+  
+
+</body>
+
+<script src="/js/theme-switch.js"></script>
+<script defer src="/js/copy-code.js"></script>
+</html>

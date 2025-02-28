@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en-us"
+  dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+
+<link rel="icon" type="image/ico" href="https://weenable.github.io//favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://weenable.github.io//favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://weenable.github.io//favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://weenable.github.io//android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://weenable.github.io//apple-touch-icon.png">
+
+<meta name="description" content=""/>
+
+
+
+<title>
+    
+    实现redis客户端一致性哈希分片 | Ween&#39;s Blog
+    
+</title>
+
+<link rel="canonical" href="https://weenable.github.io/posts/golang/%E5%AE%9E%E7%8E%B0redis%E5%AE%A2%E6%88%B7%E7%AB%AF%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C%E5%88%86%E7%89%87/"/>
+
+<meta property="og:url" content="https://weenable.github.io/posts/golang/%E5%AE%9E%E7%8E%B0redis%E5%AE%A2%E6%88%B7%E7%AB%AF%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C%E5%88%86%E7%89%87/">
+  <meta property="og:site_name" content="Ween&#39;s Blog">
+  <meta property="og:title" content="实现redis客户端一致性哈希分片">
+  <meta property="og:description" content="实现原理 # 哈希方案有以下几种：
+普通哈希分片 一致性哈希分片 范围哈希分片 分片有以下几种方案：
+redis官方哈希槽分片方案（属于服务端sharding，使用范围哈希） 客户端sharding，可以使用普通哈希、一致性哈希 代理sharding，使用代理器进行分片，有性能损耗 客户端通过一致性哈希实现分片 # package main import ( &#34;context&#34; &#34;github.com/go-redis/redis/v8&#34; &#34;github.com/stathat/consistent&#34; ) // 初始化支持一致性哈希的客户端结构 type ShardingClient struct { consistentHash *consistent.Consistent clients map[string]*redis.Client } func NewShardingClient(addrs []string) *ShardingClient { ch := consistent.New() clients := make(map[string]*redis.Client) for _, addr := range addrs { ch.Add(addr) clients[addr] = redis.NewClient(&amp;redis.Options{ Addr: addr, }) } return &amp;ShardingClient{ consistentHash: ch, clients: clients, } } // getClient 根据键获取相应的 Redis 客户端 func (sc *ShardingClient) getClient(key string) (*redis.Client, error) { addr, err := sc.consistentHash.Get(key) if err != nil { return nil, err } return sc.clients[addr], nil } // Set 在相应的 Redis 实例上设置键值对 func (sc *ShardingClient) Set(ctx context.Context, key, value string) error { client, err := sc.getClient(key) if err != nil { return err } return client.Set(ctx, key, value, 0).Err() } // Get 在相应的 Redis 实例上获取键值对 func (sc *ShardingClient) Get(ctx context.Context, key string) (string, error) { client, err := sc.getClient(key) if err != nil { return &#34;&#34;, err } return client.Get(ctx, key).Result() } func main() { addrs := []string{ &#34;127.0.0.1:6379&#34;, &#34;127.0.0.1:6380&#34;, &#34;127.0.0.1:6381&#34;, } // 初始化 Sharding 客户端 shardingClient := NewShardingClient(addrs) ctx := context.Background() // 测试连接和操作 err := shardingClient.Set(ctx, &#34;key&#34;, &#34;value&#34;) if err != nil { log.Fatalf(&#34;Failed to set key: %v&#34;, err) } val, err := shardingClient.Get(ctx, &#34;key&#34;) if err != nil { log.Fatalf(&#34;Failed to get key: %v&#34;, err) } fmt.Printf(&#34;key: %s\n&#34;, val) }">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-02-28T19:03:16+08:00">
+    <meta property="article:modified_time" content="2025-02-28T19:03:16+08:00">
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/assets/combined.min.db1f6bdda2e5a4d5c9a316aa295aaeba691b0d6154397bbb6787fea95b273e6a.css" media="all">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+<body class="auto">
+
+  <div class="content">
+    <header>
+      
+
+<div class="header">
+
+    
+
+    <h1 class="header-title">
+        <a href="https://weenable.github.io/">Ween&#39;s Blog</a>
+    </h1>
+
+    <div class="flex">
+        
+
+        
+        
+      
+        <p class="small ">
+            <a href="/" >
+                /home
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/posts" >
+                /posts
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/categories" >
+                /categories
+            </a>
+        </p>
+        
+        
+    </div>
+
+    
+
+</div>
+
+    </header>
+
+    <main class="main">
+      
+
+
+
+
+
+
+
+<div  class="autonumber" >
+
+  <div class="single-intro-container">
+
+    
+
+    <h1 class="single-title">实现redis客户端一致性哈希分片</h1>
+    
+
+    
+
+    <p class="single-readtime">
+      
+      
+      
+      <time datetime="2025-02-28T19:03:16&#43;08:00">February 28, 2025</time>
+      
+
+      
+      &nbsp; · &nbsp;
+      2 min read
+      
+    </p>
+
+  </div>
+
+  
+
+  
+
+  
+  <aside class="toc">
+    <p><strong>Table of contents</strong></p>
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </aside>
+  
+
+  
+
+  <div class="single-content">
+    <h5 class="heading" id="实现原理">
+  实现原理
+  <a class="anchor" href="#%e5%ae%9e%e7%8e%b0%e5%8e%9f%e7%90%86">#</a>
+</h5>
+<p>哈希方案有以下几种：</p>
+<ul>
+<li>普通哈希分片</li>
+<li>一致性哈希分片</li>
+<li>范围哈希分片</li>
+</ul>
+<p>分片有以下几种方案：</p>
+<ul>
+<li>redis官方哈希槽分片方案（属于服务端sharding，使用范围哈希）</li>
+<li>客户端sharding，可以使用普通哈希、一致性哈希</li>
+<li>代理sharding，使用代理器进行分片，有性能损耗</li>
+</ul>
+<h5 class="heading" id="客户端通过一致性哈希实现分片">
+  客户端通过一致性哈希实现分片
+  <a class="anchor" href="#%e5%ae%a2%e6%88%b7%e7%ab%af%e9%80%9a%e8%bf%87%e4%b8%80%e8%87%b4%e6%80%a7%e5%93%88%e5%b8%8c%e5%ae%9e%e7%8e%b0%e5%88%86%e7%89%87">#</a>
+</h5>
+<pre tabindex="0"><code>package main
+
+import (
+	&#34;context&#34;
+	&#34;github.com/go-redis/redis/v8&#34;
+	&#34;github.com/stathat/consistent&#34;
+)
+
+// 初始化支持一致性哈希的客户端结构
+type ShardingClient struct {
+	consistentHash *consistent.Consistent
+	clients        map[string]*redis.Client
+}
+
+func NewShardingClient(addrs []string) *ShardingClient {
+	ch := consistent.New()
+	clients := make(map[string]*redis.Client)
+
+	for _, addr := range addrs {
+		ch.Add(addr)
+		clients[addr] = redis.NewClient(&amp;redis.Options{
+			Addr: addr,
+		})
+	}
+
+	return &amp;ShardingClient{
+		consistentHash: ch,
+		clients:        clients,
+	}
+}
+
+// getClient 根据键获取相应的 Redis 客户端
+func (sc *ShardingClient) getClient(key string) (*redis.Client, error) {
+	addr, err := sc.consistentHash.Get(key)
+	if err != nil {
+		return nil, err
+	}
+	return sc.clients[addr], nil
+}
+
+// Set 在相应的 Redis 实例上设置键值对
+func (sc *ShardingClient) Set(ctx context.Context, key, value string) error {
+	client, err := sc.getClient(key)
+	if err != nil {
+		return err
+	}
+	return client.Set(ctx, key, value, 0).Err()
+}
+
+// Get 在相应的 Redis 实例上获取键值对
+func (sc *ShardingClient) Get(ctx context.Context, key string) (string, error) {
+	client, err := sc.getClient(key)
+	if err != nil {
+		return &#34;&#34;, err
+	}
+	return client.Get(ctx, key).Result()
+}
+
+
+func main() {
+	addrs := []string{
+		&#34;127.0.0.1:6379&#34;,
+		&#34;127.0.0.1:6380&#34;,
+		&#34;127.0.0.1:6381&#34;,
+	}
+
+	// 初始化 Sharding 客户端
+	shardingClient := NewShardingClient(addrs)
+
+	ctx := context.Background()
+
+	// 测试连接和操作
+	err := shardingClient.Set(ctx, &#34;key&#34;, &#34;value&#34;)
+	if err != nil {
+		log.Fatalf(&#34;Failed to set key: %v&#34;, err)
+	}
+
+	val, err := shardingClient.Get(ctx, &#34;key&#34;)
+	if err != nil {
+		log.Fatalf(&#34;Failed to get key: %v&#34;, err)
+	}
+
+	fmt.Printf(&#34;key: %s\n&#34;, val)
+}
+</code></pre>
+    
+  </div>
+
+  
+
+  
+
+  
+  
+
+<div class="single-pagination">
+    <hr />
+
+    <div class="flex">
+
+        <div class="single-pagination-prev">
+            
+            <div class="single-pagination-container-prev">
+                <div class="single-pagination-text">←</div>
+                <div class="single-pagination-text">
+                    <a href="/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E7%AE%97%E6%B3%95%E5%AE%9E%E7%8E%B0/">
+                        布隆过滤器算法实现
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="single-pagination-next">
+            
+            <div class="single-pagination-container-next">
+                <div class="single-pagination-text">
+                    <a href="/posts/golang/go-redis%E5%93%A8%E5%85%B5%E6%A8%A1%E5%BC%8F%E4%B8%BB%E4%BB%8E%E5%88%87%E6%8D%A2%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+                        go-redis哨兵模式主从切换源码分析
+                    </a>
+                </div>
+                <div class="single-pagination-text">→</div>
+            </div>
+            
+        </div>
+
+    </div>
+
+    <hr />
+</div>
+
+
+
+  
+
+  
+
+  
+  <div class="back-to-top">
+    <a href="#top">
+      back to top
+    </a>
+  </div>
+  
+
+</div>
+
+
+    </main>
+  </div>
+
+  <footer>
+    
+
+    
+    <p>Powered by
+        <a href="https://gohugo.io/">Hugo</a>
+        and
+        <a href="https://github.com/tomfran/typo">tomfran/typo</a>
+    </p>
+    
+    
+    
+
+
+  </footer>
+
+  
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body);"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false }
+      ]
+    });
+  });
+</script>
+  
+
+</body>
+
+<script src="/js/theme-switch.js"></script>
+<script defer src="/js/copy-code.js"></script>
+</html>

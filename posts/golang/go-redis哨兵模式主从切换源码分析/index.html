@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en-us"
+  dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+
+<link rel="icon" type="image/ico" href="https://weenable.github.io//favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://weenable.github.io//favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://weenable.github.io//favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://weenable.github.io//android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://weenable.github.io//apple-touch-icon.png">
+
+<meta name="description" content=""/>
+
+
+
+<title>
+    
+    go-redis哨兵模式主从切换源码分析 | Ween&#39;s Blog
+    
+</title>
+
+<link rel="canonical" href="https://weenable.github.io/posts/golang/go-redis%E5%93%A8%E5%85%B5%E6%A8%A1%E5%BC%8F%E4%B8%BB%E4%BB%8E%E5%88%87%E6%8D%A2%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
+
+<meta property="og:url" content="https://weenable.github.io/posts/golang/go-redis%E5%93%A8%E5%85%B5%E6%A8%A1%E5%BC%8F%E4%B8%BB%E4%BB%8E%E5%88%87%E6%8D%A2%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+  <meta property="og:site_name" content="Ween&#39;s Blog">
+  <meta property="og:title" content="go-redis哨兵模式主从切换源码分析">
+  <meta property="og:description" content="实现原理 # 通过哨兵获取主节点信息：在连接 Redis 集群时，go-redis 客户端会连接到一个或多个哨兵节点，获取当前的主节点信息。如果主节点发生故障，哨兵会进行故障转移，并通知客户端新的主节点信息。 周期性地从哨兵获取主节点信息：go-redis 客户端会周期性地向哨兵节点请求主节点信息，以确保它始终连接到当前的主节点。这个机制可以帮助客户端快速感知主从切换。 在操作失败时重新获取主节点信息：如果客户端在执行操作时遇到连接错误或其他错误，可能会重新从哨兵节点获取主节点的信息，并重试操作。 源码分析 # 初始化 //rdb := redis.NewFailoverClient(&amp;redis.FailoverOptions{ // MasterName: &#34;mymaster&#34;, // 哨兵配置中主节点的名字 // SentinelAddrs: []string{&#34;127.0.0.1:26379&#34;, &#34;127.0.0.1:26380&#34;, &#34;127.0.0.1:26381&#34;}, //}) type FailoverOptions struct { MasterName string SentinelAddrs []string // ... other options } func NewFailoverClient(opt *FailoverOptions) *Client { sentinel := newSentinel(opt) return NewClient(&amp;Options{ Addr: sentinel.masterAddr(), // ... other options }) } func newSentinel(opt *FailoverOptions) *sentinel { // Connect to sentinel nodes and get master address return &amp;sentinel{ masterName: opt.MasterName, addrs: opt.SentinelAddrs, } } func (s *sentinel) masterAddr() string { // Get master address from sentinel nodes } 周期性刷新master地址 func (s *sentinel) periodicallyRefreshMasterAddr() { ticker := time.NewTicker(time.Minute) for range ticker.C { addr := s.masterAddr() // Update client&#39;s master address } } 失败时重试和刷新master func (c *Client) doWithRetry(fn func() error) error { for i := 0; i &lt; maxRetries; i&#43;&#43; { err := fn() if err == nil { return nil } if isConnectionError(err) { c.refreshMasterAddr() } time.Sleep(retryBackoff) } return fmt.Errorf(&#34;after %d retries, last error: %v&#34;, maxRetries, err) } func (c *Client) refreshMasterAddr() { addr := c.sentinel.masterAddr() c.Options().Addr = addr }">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-02-28T19:04:12+08:00">
+    <meta property="article:modified_time" content="2025-02-28T19:04:12+08:00">
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/assets/combined.min.db1f6bdda2e5a4d5c9a316aa295aaeba691b0d6154397bbb6787fea95b273e6a.css" media="all">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+<body class="auto">
+
+  <div class="content">
+    <header>
+      
+
+<div class="header">
+
+    
+
+    <h1 class="header-title">
+        <a href="https://weenable.github.io/">Ween&#39;s Blog</a>
+    </h1>
+
+    <div class="flex">
+        
+
+        
+        
+      
+        <p class="small ">
+            <a href="/" >
+                /home
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/posts" >
+                /posts
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/categories" >
+                /categories
+            </a>
+        </p>
+        
+        
+    </div>
+
+    
+
+</div>
+
+    </header>
+
+    <main class="main">
+      
+
+
+
+
+
+
+
+<div  class="autonumber" >
+
+  <div class="single-intro-container">
+
+    
+
+    <h1 class="single-title">go-redis哨兵模式主从切换源码分析</h1>
+    
+
+    
+
+    <p class="single-readtime">
+      
+      
+      
+      <time datetime="2025-02-28T19:04:12&#43;08:00">February 28, 2025</time>
+      
+
+      
+      &nbsp; · &nbsp;
+      1 min read
+      
+    </p>
+
+  </div>
+
+  
+
+  
+
+  
+  <aside class="toc">
+    <p><strong>Table of contents</strong></p>
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </aside>
+  
+
+  
+
+  <div class="single-content">
+    <h5 class="heading" id="实现原理">
+  实现原理
+  <a class="anchor" href="#%e5%ae%9e%e7%8e%b0%e5%8e%9f%e7%90%86">#</a>
+</h5>
+<ol>
+<li>通过哨兵获取主节点信息：在连接 Redis 集群时，<code>go-redis</code> 客户端会连接到一个或多个哨兵节点，获取当前的主节点信息。如果主节点发生故障，哨兵会进行故障转移，并通知客户端新的主节点信息。</li>
+<li>周期性地从哨兵获取主节点信息：<code>go-redis</code> 客户端会周期性地向哨兵节点请求主节点信息，以确保它始终连接到当前的主节点。这个机制可以帮助客户端快速感知主从切换。</li>
+<li>在操作失败时重新获取主节点信息：如果客户端在执行操作时遇到连接错误或其他错误，可能会重新从哨兵节点获取主节点的信息，并重试操作。</li>
+</ol>
+<h5 class="heading" id="源码分析">
+  源码分析
+  <a class="anchor" href="#%e6%ba%90%e7%a0%81%e5%88%86%e6%9e%90">#</a>
+</h5>
+<ul>
+<li>初始化</li>
+</ul>
+<pre tabindex="0"><code>//rdb := redis.NewFailoverClient(&amp;redis.FailoverOptions{
+//    MasterName:    &#34;mymaster&#34;, // 哨兵配置中主节点的名字
+//    SentinelAddrs: []string{&#34;127.0.0.1:26379&#34;, &#34;127.0.0.1:26380&#34;, &#34;127.0.0.1:26381&#34;},
+//})
+
+
+type FailoverOptions struct {
+    MasterName    string
+    SentinelAddrs []string
+    // ... other options
+}
+
+func NewFailoverClient(opt *FailoverOptions) *Client {
+    sentinel := newSentinel(opt)
+    return NewClient(&amp;Options{
+        Addr: sentinel.masterAddr(),
+        // ... other options
+    })
+}
+
+func newSentinel(opt *FailoverOptions) *sentinel {
+    // Connect to sentinel nodes and get master address
+    return &amp;sentinel{
+        masterName: opt.MasterName,
+        addrs:      opt.SentinelAddrs,
+    }
+}
+
+func (s *sentinel) masterAddr() string {
+    // Get master address from sentinel nodes
+}
+</code></pre><ul>
+<li>周期性刷新master地址</li>
+</ul>
+<pre tabindex="0"><code>func (s *sentinel) periodicallyRefreshMasterAddr() {
+    ticker := time.NewTicker(time.Minute)
+    for range ticker.C {
+        addr := s.masterAddr()
+        // Update client&#39;s master address
+    }
+}
+</code></pre><ul>
+<li>失败时重试和刷新master</li>
+</ul>
+<pre tabindex="0"><code>func (c *Client) doWithRetry(fn func() error) error {
+    for i := 0; i &lt; maxRetries; i++ {
+        err := fn()
+        if err == nil {
+            return nil
+        }
+        if isConnectionError(err) {
+            c.refreshMasterAddr()
+        }
+        time.Sleep(retryBackoff)
+    }
+    return fmt.Errorf(&#34;after %d retries, last error: %v&#34;, maxRetries, err)
+}
+
+func (c *Client) refreshMasterAddr() {
+    addr := c.sentinel.masterAddr()
+    c.Options().Addr = addr
+}
+</code></pre>
+    
+  </div>
+
+  
+
+  
+
+  
+  
+
+<div class="single-pagination">
+    <hr />
+
+    <div class="flex">
+
+        <div class="single-pagination-prev">
+            
+            <div class="single-pagination-container-prev">
+                <div class="single-pagination-text">←</div>
+                <div class="single-pagination-text">
+                    <a href="/posts/golang/%E5%AE%9E%E7%8E%B0redis%E5%AE%A2%E6%88%B7%E7%AB%AF%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C%E5%88%86%E7%89%87/">
+                        实现redis客户端一致性哈希分片
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="single-pagination-next">
+            
+            <div class="single-pagination-container-next">
+                <div class="single-pagination-text">
+                    <a href="/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E5%93%88%E5%B8%8C%E8%A1%A8%E6%B8%90%E8%BF%9B%E5%BC%8Frehash%E5%AE%9E%E7%8E%B0/">
+                        哈希表渐进式Rehash实现
+                    </a>
+                </div>
+                <div class="single-pagination-text">→</div>
+            </div>
+            
+        </div>
+
+    </div>
+
+    <hr />
+</div>
+
+
+
+  
+
+  
+
+  
+  <div class="back-to-top">
+    <a href="#top">
+      back to top
+    </a>
+  </div>
+  
+
+</div>
+
+
+    </main>
+  </div>
+
+  <footer>
+    
+
+    
+    <p>Powered by
+        <a href="https://gohugo.io/">Hugo</a>
+        and
+        <a href="https://github.com/tomfran/typo">tomfran/typo</a>
+    </p>
+    
+    
+    
+
+
+  </footer>
+
+  
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body);"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false }
+      ]
+    });
+  });
+</script>
+  
+
+</body>
+
+<script src="/js/theme-switch.js"></script>
+<script defer src="/js/copy-code.js"></script>
+</html>
