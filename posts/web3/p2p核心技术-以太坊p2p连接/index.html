@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en-us"
+  dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+
+<link rel="icon" type="image/ico" href="https://weenable.github.io//favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://weenable.github.io//favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://weenable.github.io//favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://weenable.github.io//android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://weenable.github.io//apple-touch-icon.png">
+
+<meta name="description" content=""/>
+
+
+
+<title>
+    
+    P2P核心技术： 以太坊P2P连接 | Ween&#39;s Blog
+    
+</title>
+
+<link rel="canonical" href="https://weenable.github.io/posts/web3/p2p%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF-%E4%BB%A5%E5%A4%AA%E5%9D%8Ap2p%E8%BF%9E%E6%8E%A5/"/>
+
+<meta property="og:url" content="https://weenable.github.io/posts/web3/p2p%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF-%E4%BB%A5%E5%A4%AA%E5%9D%8Ap2p%E8%BF%9E%E6%8E%A5/">
+  <meta property="og:site_name" content="Ween&#39;s Blog">
+  <meta property="og:title" content="P2P核心技术： 以太坊P2P连接">
+  <meta property="og:description" content="详细逻辑 # 建立网络连接 ECDH握手 消息加密和签名 代码实现 # 服务端实现
+package main import ( &#34;bytes&#34; &#34;crypto/aes&#34; &#34;crypto/cipher&#34; &#34;crypto/ecdsa&#34; &#34;crypto/elliptic&#34; &#34;crypto/rand&#34; &#34;crypto/sha256&#34; &#34;errors&#34; &#34;fmt&#34; &#34;github.com/ethereum/go-ethereum/crypto&#34; &#34;github.com/ethereum/go-ethereum/crypto/ecies&#34; &#34;github.com/ethereum/go-ethereum/p2p&#34; &#34;github.com/ethereum/go-ethereum/p2p/discover&#34; &#34;github.com/ethereum/go-ethereum/p2p/enode&#34; &#34;github.com/ethereum/go-ethereum/p2p/nat&#34; &#34;github.com/ethereum/go-ethereum/rlp&#34; &#34;log&#34; &#34;math/big&#34; &#34;net&#34;) const ( MsgTypeHandshake = 0 MsgTypeData = 1 ) type SimpleProtocol struct { peers map[*p2p.Peer]*peerSession privateKey *ecies.PrivateKey ecdsaPrv *ecdsa.PrivateKey localPubKey []byte } type peerSession struct { rw p2p.MsgReadWriter sharedKey []byte peerPubKey *ecies.PublicKey peerECDSAPub *ecdsa.PublicKey aesgcm cipher.AEAD } func (ps *peerSession) decrypt(encrypted []byte) ([]byte, error) { nonceSize := ps.aesgcm.NonceSize() nonce, ct := encrypted[:nonceSize], encrypted[nonceSize:] plaintext, err := ps.aesgcm.Open(nil, nonce, ct, nil) if err != nil { return nil, fmt.Errorf(&#34;解密失败: %v&#34;, err) } return plaintext, nil } func (sp *SimpleProtocol) Name() string { return &#34;SimpleProtocol&#34; } func (sp *SimpleProtocol) Version() uint { return 1 } func (sp *SimpleProtocol) Length() uint64 { return 16 } func (sp *SimpleProtocol) generateSharedSecret(peerPubKey []byte) ([]byte, error) { pubKey, err := crypto.DecompressPubkey(peerPubKey) if err != nil { return nil, err } peerEciesPub := ecies.ImportECDSAPublic(pubKey) localEciesPub := sp.privateKey.PublicKey x, _ := localEciesPub.Curve.ScalarMult(peerEciesPub.X, peerEciesPub.Y, sp.privateKey.D.Bytes()) if x == nil { return nil, errors.New(&#34;failed to generate shared secret&#34;) } shared := sha256.Sum256(x.Bytes()) return shared[:], nil } func (sp *SimpleProtocol) handshake(peer *p2p.Peer, session *peerSession) error { // 发送公钥 if err := p2p.Send(session.rw, MsgTypeHandshake, sp.localPubKey); err != nil { return err } // 接受对方公钥 msg, err := session.rw.ReadMsg() if err != nil { return err } if msg.Code != MsgTypeHandshake { return errors.New(&#34;unexpected message type&#34;) } var peerPubKey []byte if err = msg.Decode(&amp;peerPubKey); err != nil { return err } // 生成共享密钥 shared, err := sp.generateSharedSecret(peerPubKey) if err != nil { return err } block, err := aes.NewCipher(shared) if err != nil { return err } aesgcm, err := cipher.NewGCM(block) if err != nil { return err } session.aesgcm = aesgcm pubKey, err := crypto.DecompressPubkey(peerPubKey) if err != nil { return fmt.Errorf(&#34;解压公钥失败: %v&#34;, err) } session.peerECDSAPub = pubKey log.Printf(&#34;Handshake completed with %v&#34;, peer) return nil } func (sp *SimpleProtocol) handleMessages(peer *p2p.Peer, session *peerSession) error { for { msg, err := session.rw.ReadMsg() if err != nil { log.Printf(&#34;Read error: %v&#34;, err) return nil } var ciphertext []byte msg.Decode(&amp;ciphertext) pt, err := session.decrypt(ciphertext) var signedMsg struct { Data []byte Signature []byte } s := rlp.NewStream(bytes.NewReader(pt), 0) if err := s.Decode(&amp;signedMsg); err != nil { log.Printf(&#34;解析签名消息失败: %v&#34;, err) continue } hash := crypto.Keccak256Hash(signedMsg.Data) sig := signedMsg.Signature r := new(big.Int).SetBytes(sig[:32]) ss := new(big.Int).SetBytes(sig[32:64]) valid := ecdsa.Verify(session.peerECDSAPub, hash.Bytes(), r, ss) if !valid { log.Printf(&#34;签名验证失败&#34;) continue } log.Printf(&#34;receive msg: %s&#34;, string(signedMsg.Data)) } } func (sp *SimpleProtocol) Run(peer *p2p.Peer, rw p2p.MsgReadWriter) error { session := &amp;peerSession{rw: rw} sp.peers[peer] = session if err := sp.handshake(peer, session); err != nil { return fmt.Errorf(&#34;handshake failed: %v&#34;, err) } defer delete(sp.peers, peer) err := sp.handleMessages(peer, session) if err != nil { return fmt.Errorf(&#34;handlemessage failed: %v&#34;, err) } return nil } func (sp *SimpleProtocol) SendMessage(peer *p2p.Peer, message string) error { session, ok := sp.peers[peer] if !ok { return errors.New(&#34;peer not connected&#34;) } hash := crypto.Keccak256Hash([]byte(message)) signature, err := crypto.Sign(hash.Bytes(), sp.ecdsaPrv) if err != nil { return fmt.Errorf(&#34;签名失败: %v&#34;, err) } signedMsg := struct { Data []byte Signature []byte }{ Data: []byte(message), Signature: signature, } // RLP编码 var buffer bytes.Buffer if err := rlp.Encode(&amp;buffer, signedMsg); err != nil { return fmt.Errorf(&#34;RLP编码失败: %v&#34;, err) } encodedMsg := buffer.Bytes() // 加密 nonce := make([]byte, session.aesgcm.NonceSize()) if _, err := rand.Read(nonce); err != nil { return fmt.Errorf(&#34;生成nonce失败: %v&#34;, err) } ciphertext := session.aesgcm.Seal(nil, nonce, encodedMsg, nil) // 合并nonce和密文 encryptedMsg := append(nonce, ciphertext...) // 发送加密消息 return p2p.Send(session.rw, MsgTypeData, encryptedMsg) } func NewSimpleProtocol(prv *ecdsa.PrivateKey) *SimpleProtocol { eciesPrv := ecies.ImportECDSA(prv) pubKey := elliptic.MarshalCompressed(prv.Curve, prv.PublicKey.X, prv.PublicKey.Y) return &amp;SimpleProtocol{ peers: make(map[*p2p.Peer]*peerSession), privateKey: eciesPrv, localPubKey: pubKey, } } func main() { privKey, _ := crypto.GenerateKey() proto := NewSimpleProtocol(privKey) config := p2p.Config{ PrivateKey: privKey, Name: &#34;SimpleP2PNode&#34;, ListenAddr: &#34;:30303&#34;, // 固定端口 Protocols: []p2p.Protocol{{ Name: proto.Name(), Version: proto.Version(), Length: proto.Length(), Run: proto.Run, }}, NAT: nat.Any(), MaxPeers: 10, EnableMsgEvents: true, } srv := &amp;p2p.Server{Config: config} if err := srv.Start(); err != nil { log.Fatalf(&#34;Failed to start server: %v&#34;, err) } defer srv.Stop() log.Printf(&#34;Server enode: %s&#34;, srv.Self().URLv4()) // 初始化发现协议 tcpAddr, _ := net.ResolveTCPAddr(&#34;tcp&#34;, srv.ListenAddr) udpPort := tcpAddr.Port &#43; 1 udpAddr := fmt.Sprintf(&#34;:%d&#34;, udpPort) udpConn, err := net.ListenPacket(&#34;udp&#34;, udpAddr) if err != nil { log.Fatalf(&#34;Failed to listen UDP: %v&#34;, err) } discoverDB, _ := enode.OpenDB(&#34;&#34;) localNode := enode.NewLocalNode(discoverDB, privKey) localNode.SetFallbackIP(net.IP{127, 0, 0, 1}) localNode.SetFallbackUDP(udpPort) discv5, err := discover.ListenV5(udpConn.(*net.UDPConn), localNode, discover.Config{ PrivateKey: privKey, }) if err != nil { log.Fatalf(&#34;Failed to start discovery: %v&#34;, err) } defer discv5.Close() select {} } 客户端实现">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-04-30T11:16:08+08:00">
+    <meta property="article:modified_time" content="2025-04-30T11:16:08+08:00">
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/assets/combined.min.db1f6bdda2e5a4d5c9a316aa295aaeba691b0d6154397bbb6787fea95b273e6a.css" media="all">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+<body class="auto">
+
+  <div class="content">
+    <header>
+      
+
+<div class="header">
+
+    
+
+    <h1 class="header-title">
+        <a href="https://weenable.github.io/">Ween&#39;s Blog</a>
+    </h1>
+
+    <div class="flex">
+        
+
+        
+        
+      
+        <p class="small ">
+            <a href="/" >
+                /home
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/posts" >
+                /posts
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/categories" >
+                /categories
+            </a>
+        </p>
+        
+        
+    </div>
+
+    
+
+</div>
+
+    </header>
+
+    <main class="main">
+      
+
+
+
+
+
+
+
+<div  class="autonumber" >
+
+  <div class="single-intro-container">
+
+    
+
+    <h1 class="single-title">P2P核心技术： 以太坊P2P连接</h1>
+    
+
+    
+
+    <p class="single-readtime">
+      
+      
+      
+      <time datetime="2025-04-30T11:16:08&#43;08:00">April 30, 2025</time>
+      
+
+      
+      &nbsp; · &nbsp;
+      7 min read
+      
+    </p>
+
+  </div>
+
+  
+
+  
+  
+  
+
+  
+
+  
+  <aside class="toc">
+    <p><strong>Table of contents</strong></p>
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#详细逻辑">详细逻辑</a></li>
+        <li><a href="#代码实现">代码实现</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </aside>
+  
+
+  
+
+  <div class="single-content">
+    <h3 class="heading" id="详细逻辑">
+  详细逻辑
+  <a class="anchor" href="#%e8%af%a6%e7%bb%86%e9%80%bb%e8%be%91">#</a>
+</h3>
+<ol>
+<li>建立网络连接</li>
+<li>ECDH握手</li>
+<li>消息加密和签名</li>
+</ol>
+<h3 class="heading" id="代码实现">
+  代码实现
+  <a class="anchor" href="#%e4%bb%a3%e7%a0%81%e5%ae%9e%e7%8e%b0">#</a>
+</h3>
+<p>服务端实现</p>
+<pre tabindex="0"><code>package main  
+  
+import (  
+    &#34;bytes&#34;  
+    &#34;crypto/aes&#34;    &#34;crypto/cipher&#34;    &#34;crypto/ecdsa&#34;    &#34;crypto/elliptic&#34;    &#34;crypto/rand&#34;    &#34;crypto/sha256&#34;    &#34;errors&#34;    &#34;fmt&#34;    &#34;github.com/ethereum/go-ethereum/crypto&#34;    &#34;github.com/ethereum/go-ethereum/crypto/ecies&#34;    &#34;github.com/ethereum/go-ethereum/p2p&#34;    &#34;github.com/ethereum/go-ethereum/p2p/discover&#34;    &#34;github.com/ethereum/go-ethereum/p2p/enode&#34;    &#34;github.com/ethereum/go-ethereum/p2p/nat&#34;    &#34;github.com/ethereum/go-ethereum/rlp&#34;    &#34;log&#34;    &#34;math/big&#34;    &#34;net&#34;)  
+  
+const (  
+    MsgTypeHandshake = 0  
+    MsgTypeData      = 1  
+)  
+  
+type SimpleProtocol struct {  
+    peers       map[*p2p.Peer]*peerSession  
+    privateKey  *ecies.PrivateKey  
+    ecdsaPrv    *ecdsa.PrivateKey  
+    localPubKey []byte  
+}  
+  
+type peerSession struct {  
+    rw           p2p.MsgReadWriter  
+    sharedKey    []byte  
+    peerPubKey   *ecies.PublicKey  
+    peerECDSAPub *ecdsa.PublicKey  
+    aesgcm       cipher.AEAD  
+}  
+  
+func (ps *peerSession) decrypt(encrypted []byte) ([]byte, error) {  
+    nonceSize := ps.aesgcm.NonceSize()  
+    nonce, ct := encrypted[:nonceSize], encrypted[nonceSize:]  
+  
+    plaintext, err := ps.aesgcm.Open(nil, nonce, ct, nil)  
+    if err != nil {  
+       return nil, fmt.Errorf(&#34;解密失败: %v&#34;, err)  
+    }  
+  
+    return plaintext, nil  
+}  
+  
+func (sp *SimpleProtocol) Name() string   { return &#34;SimpleProtocol&#34; }  
+func (sp *SimpleProtocol) Version() uint  { return 1 }  
+func (sp *SimpleProtocol) Length() uint64 { return 16 }  
+  
+func (sp *SimpleProtocol) generateSharedSecret(peerPubKey []byte) ([]byte, error) {  
+    pubKey, err := crypto.DecompressPubkey(peerPubKey)  
+    if err != nil {  
+       return nil, err  
+    }  
+    peerEciesPub := ecies.ImportECDSAPublic(pubKey)  
+    localEciesPub := sp.privateKey.PublicKey  
+  
+    x, _ := localEciesPub.Curve.ScalarMult(peerEciesPub.X, peerEciesPub.Y, sp.privateKey.D.Bytes())  
+    if x == nil {  
+       return nil, errors.New(&#34;failed to generate shared secret&#34;)  
+    }  
+  
+    shared := sha256.Sum256(x.Bytes())  
+    return shared[:], nil  
+}  
+func (sp *SimpleProtocol) handshake(peer *p2p.Peer, session *peerSession) error {  
+    // 发送公钥  
+    if err := p2p.Send(session.rw, MsgTypeHandshake, sp.localPubKey); err != nil {  
+       return err  
+    }  
+  
+    // 接受对方公钥  
+    msg, err := session.rw.ReadMsg()  
+    if err != nil {  
+       return err  
+    }  
+    if msg.Code != MsgTypeHandshake {  
+       return errors.New(&#34;unexpected message type&#34;)  
+    }  
+  
+    var peerPubKey []byte  
+    if err = msg.Decode(&amp;peerPubKey); err != nil {  
+       return err  
+    }  
+  
+    // 生成共享密钥  
+    shared, err := sp.generateSharedSecret(peerPubKey)  
+    if err != nil {  
+       return err  
+    }  
+  
+    block, err := aes.NewCipher(shared)  
+    if err != nil {  
+       return err  
+    }  
+  
+    aesgcm, err := cipher.NewGCM(block)  
+    if err != nil {  
+       return err  
+    }  
+    session.aesgcm = aesgcm  
+  
+    pubKey, err := crypto.DecompressPubkey(peerPubKey)  
+    if err != nil {  
+       return fmt.Errorf(&#34;解压公钥失败: %v&#34;, err)  
+    }  
+    session.peerECDSAPub = pubKey  
+  
+    log.Printf(&#34;Handshake completed with %v&#34;, peer)  
+    return nil  
+}  
+  
+func (sp *SimpleProtocol) handleMessages(peer *p2p.Peer, session *peerSession) error {  
+    for {  
+       msg, err := session.rw.ReadMsg()  
+       if err != nil {  
+          log.Printf(&#34;Read error: %v&#34;, err)  
+          return nil  
+       }  
+       var ciphertext []byte  
+       msg.Decode(&amp;ciphertext)  
+  
+       pt, err := session.decrypt(ciphertext)  
+       var signedMsg struct {  
+          Data      []byte  
+          Signature []byte  
+       }  
+       s := rlp.NewStream(bytes.NewReader(pt), 0)  
+       if err := s.Decode(&amp;signedMsg); err != nil {  
+          log.Printf(&#34;解析签名消息失败: %v&#34;, err)  
+          continue  
+       }  
+       hash := crypto.Keccak256Hash(signedMsg.Data)  
+       sig := signedMsg.Signature  
+  
+       r := new(big.Int).SetBytes(sig[:32])  
+       ss := new(big.Int).SetBytes(sig[32:64])  
+       valid := ecdsa.Verify(session.peerECDSAPub, hash.Bytes(), r, ss)  
+       if !valid {  
+          log.Printf(&#34;签名验证失败&#34;)  
+          continue  
+       }  
+  
+       log.Printf(&#34;receive msg: %s&#34;, string(signedMsg.Data))  
+    }  
+}  
+func (sp *SimpleProtocol) Run(peer *p2p.Peer, rw p2p.MsgReadWriter) error {  
+    session := &amp;peerSession{rw: rw}  
+    sp.peers[peer] = session  
+  
+    if err := sp.handshake(peer, session); err != nil {  
+       return fmt.Errorf(&#34;handshake failed: %v&#34;, err)  
+    }  
+  
+    defer delete(sp.peers, peer)  
+  
+    err := sp.handleMessages(peer, session)  
+    if err != nil {  
+       return fmt.Errorf(&#34;handlemessage failed: %v&#34;, err)  
+    }  
+  
+    return nil  
+}  
+  
+func (sp *SimpleProtocol) SendMessage(peer *p2p.Peer, message string) error {  
+    session, ok := sp.peers[peer]  
+    if !ok {  
+       return errors.New(&#34;peer not connected&#34;)  
+    }  
+  
+    hash := crypto.Keccak256Hash([]byte(message))  
+    signature, err := crypto.Sign(hash.Bytes(), sp.ecdsaPrv)  
+    if err != nil {  
+       return fmt.Errorf(&#34;签名失败: %v&#34;, err)  
+    }  
+    signedMsg := struct {  
+       Data      []byte  
+       Signature []byte  
+    }{  
+       Data:      []byte(message),  
+       Signature: signature,  
+    }  
+  
+    // RLP编码  
+    var buffer bytes.Buffer  
+    if err := rlp.Encode(&amp;buffer, signedMsg); err != nil {  
+       return fmt.Errorf(&#34;RLP编码失败: %v&#34;, err)  
+    }  
+    encodedMsg := buffer.Bytes()  
+  
+    // 加密  
+    nonce := make([]byte, session.aesgcm.NonceSize())  
+    if _, err := rand.Read(nonce); err != nil {  
+       return fmt.Errorf(&#34;生成nonce失败: %v&#34;, err)  
+    }  
+    ciphertext := session.aesgcm.Seal(nil, nonce, encodedMsg, nil)  
+  
+    // 合并nonce和密文  
+    encryptedMsg := append(nonce, ciphertext...)  
+  
+    // 发送加密消息  
+    return p2p.Send(session.rw, MsgTypeData, encryptedMsg)  
+}  
+  
+func NewSimpleProtocol(prv *ecdsa.PrivateKey) *SimpleProtocol {  
+    eciesPrv := ecies.ImportECDSA(prv)  
+    pubKey := elliptic.MarshalCompressed(prv.Curve, prv.PublicKey.X, prv.PublicKey.Y)  
+    return &amp;SimpleProtocol{  
+       peers:       make(map[*p2p.Peer]*peerSession),  
+       privateKey:  eciesPrv,  
+       localPubKey: pubKey,  
+    }  
+}  
+  
+func main() {  
+    privKey, _ := crypto.GenerateKey()  
+    proto := NewSimpleProtocol(privKey)  
+  
+    config := p2p.Config{  
+       PrivateKey: privKey,  
+       Name:       &#34;SimpleP2PNode&#34;,  
+       ListenAddr: &#34;:30303&#34;, // 固定端口  
+       Protocols: []p2p.Protocol{{  
+          Name:    proto.Name(),  
+          Version: proto.Version(),  
+          Length:  proto.Length(),  
+          Run:     proto.Run,  
+       }},  
+       NAT:             nat.Any(),  
+       MaxPeers:        10,  
+       EnableMsgEvents: true,  
+    }  
+  
+    srv := &amp;p2p.Server{Config: config}  
+    if err := srv.Start(); err != nil {  
+       log.Fatalf(&#34;Failed to start server: %v&#34;, err)  
+    }  
+    defer srv.Stop()  
+  
+    log.Printf(&#34;Server enode: %s&#34;, srv.Self().URLv4())  
+  
+    // 初始化发现协议  
+    tcpAddr, _ := net.ResolveTCPAddr(&#34;tcp&#34;, srv.ListenAddr)  
+    udpPort := tcpAddr.Port + 1  
+    udpAddr := fmt.Sprintf(&#34;:%d&#34;, udpPort)  
+    udpConn, err := net.ListenPacket(&#34;udp&#34;, udpAddr)  
+    if err != nil {  
+       log.Fatalf(&#34;Failed to listen UDP: %v&#34;, err)  
+    }  
+  
+    discoverDB, _ := enode.OpenDB(&#34;&#34;)  
+    localNode := enode.NewLocalNode(discoverDB, privKey)  
+    localNode.SetFallbackIP(net.IP{127, 0, 0, 1})  
+    localNode.SetFallbackUDP(udpPort)  
+  
+    discv5, err := discover.ListenV5(udpConn.(*net.UDPConn), localNode, discover.Config{  
+       PrivateKey: privKey,  
+    })  
+    if err != nil {  
+       log.Fatalf(&#34;Failed to start discovery: %v&#34;, err)  
+    }  
+    defer discv5.Close()  
+  
+    select {}  
+}
+</code></pre><p>客户端实现</p>
+<pre tabindex="0"><code>package main  
+  
+import (  
+    &#34;bufio&#34;  
+    &#34;bytes&#34;    &#34;crypto/aes&#34;    &#34;crypto/cipher&#34;    &#34;crypto/ecdsa&#34;    &#34;crypto/elliptic&#34;    &#34;crypto/rand&#34;    &#34;crypto/sha256&#34;    &#34;encoding/gob&#34;    &#34;errors&#34;    &#34;flag&#34;    &#34;fmt&#34;    &#34;github.com/ethereum/go-ethereum/rlp&#34;    &#34;log&#34;    &#34;net&#34;    &#34;os&#34;  
+    &#34;github.com/ethereum/go-ethereum/crypto&#34;    &#34;github.com/ethereum/go-ethereum/crypto/ecies&#34;    &#34;github.com/ethereum/go-ethereum/p2p&#34;    &#34;github.com/ethereum/go-ethereum/p2p/enode&#34;    &#34;github.com/ethereum/go-ethereum/p2p/nat&#34;)  
+  
+const (  
+    MsgTypeHandshake = 0  
+    MsgTypeData      = 1  
+)  
+  
+type SecureClient struct {  
+    peers       map[*p2p.Peer]*peerSession  
+    privateKey  *ecies.PrivateKey  
+    ecdsaPrv    *ecdsa.PrivateKey  
+    localPubKey []byte  
+    targetNode  *enode.Node  
+}  
+  
+type peerSession struct {  
+    rw         p2p.MsgReadWriter  
+    aesgcm     cipher.AEAD  
+    peerPubKey *ecies.PublicKey  
+}  
+  
+var targetEnode = &#34;enode://51631475f5e373db90aede61c14046a54efc2867e6850f036f5a3645e904785a2c5445e706eb66bc1380fe4eceb645e1e9effe59f6779a22ab6b7a978b6ad865@127.0.0.1:30303&#34;  
+  
+func main() {  
+    flag.Parse()  
+    gob.Register(&amp;net.TCPAddr{})  
+    gob.Register(&amp;net.UDPAddr{})  
+  
+    // 解析目标节点  
+    node, err := enode.ParseV4(targetEnode)  
+    if err != nil {  
+       log.Fatalf(&#34;解析enode失败: %v&#34;, err)  
+    }  
+  
+    // 生成客户端密钥  
+    privKey, _ := crypto.GenerateKey()  
+    client := NewSecureClient(privKey, node)  
+  
+    config := p2p.Config{  
+       PrivateKey: privKey,  
+       Name:       &#34;SecureClient&#34;,  
+       ListenAddr: &#34;:0&#34;,  
+       Protocols: []p2p.Protocol{{  
+          Name:    client.Name(),  
+          Version: client.Version(),  
+          Length:  client.Length(),  
+          Run:     client.Run,  
+       }},  
+       NAT:         nat.Any(),  
+       MaxPeers:    1,  
+       StaticNodes: []*enode.Node{node},  
+    }  
+  
+    // 启动客户端  
+    srv := &amp;p2p.Server{Config: config}  
+    if err := srv.Start(); err != nil {  
+       log.Fatal(err)  
+    }  
+    defer srv.Stop()  
+  
+    log.Printf(&#34;客户端已启动，enode: %s&#34;, srv.Self().URLv4())  
+  
+    // 命令行交互  
+    go client.startCLI(srv)  
+  
+    select {}  
+}  
+  
+func NewSecureClient(prv *ecdsa.PrivateKey, target *enode.Node) *SecureClient {  
+    eciesPrv := ecies.ImportECDSA(prv)  
+    pubKey := elliptic.MarshalCompressed(prv.Curve, prv.PublicKey.X, prv.PublicKey.Y)  
+    return &amp;SecureClient{  
+       peers:       make(map[*p2p.Peer]*peerSession),  
+       privateKey:  eciesPrv,  
+       localPubKey: pubKey,  
+       targetNode:  target,  
+       ecdsaPrv:    prv,  
+    }  
+}  
+  
+func (c *SecureClient) Name() string   { return &#34;SimpleProtocol&#34; }  
+func (c *SecureClient) Version() uint  { return 1 }  
+func (c *SecureClient) Length() uint64 { return 16 }  
+  
+func (c *SecureClient) Run(peer *p2p.Peer, rw p2p.MsgReadWriter) error {  
+    session := &amp;peerSession{rw: rw}  
+    c.peers[peer] = session  
+  
+    // 执行握手协议  
+    if err := c.performHandshake(peer, session); err != nil {  
+       return fmt.Errorf(&#34;握手失败: %v&#34;, err)  
+    }  
+  
+    // 启动消息接收循环  
+    c.handleMessages(peer, session)  
+  
+    delete(c.peers, peer)  
+    return nil  
+}  
+  
+func (c *SecureClient) performHandshake(peer *p2p.Peer, session *peerSession) error {  
+    // 发送公钥  
+    if err := p2p.Send(session.rw, MsgTypeHandshake, c.localPubKey); err != nil {  
+       return err  
+    }  
+  
+    // 接收服务端公钥  
+    msg, err := session.rw.ReadMsg()  
+    if err != nil {  
+       return err  
+    }  
+    if msg.Code != MsgTypeHandshake {  
+       return errors.New(&#34;非预期的消息类型&#34;)  
+    }  
+  
+    var serverPubKey []byte  
+    if err := msg.Decode(&amp;serverPubKey); err != nil {  
+       return err  
+    }  
+  
+    // 生成共享密钥  
+    shared, err := c.generateSharedSecret(serverPubKey)  
+    if err != nil {  
+       return err  
+    }  
+  
+    // 初始化AES-GCM  
+    block, err := aes.NewCipher(shared)  
+    if err != nil {  
+       return err  
+    }  
+  
+    aesgcm, err := cipher.NewGCM(block)  
+    if err != nil {  
+       return err  
+    }  
+    session.aesgcm = aesgcm  
+  
+    log.Printf(&#34;与服务端 %s 握手成功&#34;, peer)  
+    return nil  
+}  
+  
+func (c *SecureClient) generateSharedSecret(peerPubKey []byte) ([]byte, error) {  
+    pub, err := crypto.DecompressPubkey(peerPubKey)  
+    if err != nil {  
+       return nil, err  
+    }  
+    eciesPub := ecies.ImportECDSAPublic(pub)  
+  
+    // 椭圆曲线点乘法  
+    x, _ := eciesPub.Curve.ScalarMult(eciesPub.X, eciesPub.Y, c.privateKey.D.Bytes())  
+    if x == nil {  
+       return nil, errors.New(&#34;共享密钥生成失败&#34;)  
+    }  
+  
+    // 使用SHA-256派生密钥  
+    shared := sha256.Sum256(x.Bytes())  
+    return shared[:], nil  
+}  
+  
+func (c *SecureClient) handleMessages(peer *p2p.Peer, session *peerSession) {  
+    for {  
+       msg, err := session.rw.ReadMsg()  
+       if err != nil {  
+          log.Printf(&#34;读取错误: %v&#34;, err)  
+          return  
+       }  
+  
+       switch msg.Code {  
+       case MsgTypeData:  
+          var encrypted []byte  
+          if err := msg.Decode(&amp;encrypted); err != nil {  
+             log.Printf(&#34;解码错误: %v&#34;, err)  
+             continue  
+          }  
+          log.Printf(&#34;[来自服务端] %s&#34;, string(encrypted))  
+  
+       default:  
+          log.Printf(&#34;未知消息类型: %d&#34;, msg.Code)  
+       }  
+    }  
+}  
+  
+func (sc *SecureClient) SendMessage(peer *p2p.Peer, message string) error {  
+    session, ok := sc.peers[peer]  
+    if !ok {  
+       return errors.New(&#34;peer not connected&#34;)  
+    }  
+  
+    hash := crypto.Keccak256Hash([]byte(message))  
+    signature, err := crypto.Sign(hash.Bytes(), sc.ecdsaPrv)  
+    if err != nil {  
+       return fmt.Errorf(&#34;签名失败: %v&#34;, err)  
+    }  
+    signedMsg := struct {  
+       Data      []byte  
+       Signature []byte  
+    }{  
+       Data:      []byte(message),  
+       Signature: signature,  
+    }  
+  
+    // RLP编码  
+    var buffer bytes.Buffer  
+    if err := rlp.Encode(&amp;buffer, signedMsg); err != nil {  
+       return fmt.Errorf(&#34;RLP编码失败: %v&#34;, err)  
+    }  
+    encodedMsg := buffer.Bytes()  
+  
+    // 加密  
+    nonce := make([]byte, session.aesgcm.NonceSize())  
+    if _, err := rand.Read(nonce); err != nil {  
+       return fmt.Errorf(&#34;生成nonce失败: %v&#34;, err)  
+    }  
+    ciphertext := session.aesgcm.Seal(nil, nonce, encodedMsg, nil)  
+  
+    // 合并nonce和密文  
+    encryptedMsg := append(nonce, ciphertext...)  
+  
+    // 发送加密消息  
+    return p2p.Send(session.rw, MsgTypeData, encryptedMsg)  
+}  
+  
+func (c *SecureClient) startCLI(srv *p2p.Server) {  
+    reader := bufio.NewReader(os.Stdin)  
+    for {  
+       fmt.Print(&#34;输入消息 &gt; &#34;)  
+       text, _ := reader.ReadString(&#39;\n&#39;)  
+  
+       if len(srv.Peers()) == 0 {  
+          log.Println(&#34;尚未连接到任何节点&#34;)  
+          continue  
+       }  
+  
+       peer := srv.Peers()[0]  
+       err := c.SendMessage(peer, text)  
+       if err != nil {  
+          log.Printf(&#34;发送失败：%v&#34;, err)  
+       }  
+    }  
+}
+</code></pre>
+    
+  </div>
+
+  
+
+  
+
+  
+  
+
+<div class="single-pagination">
+    <hr />
+
+    <div class="flex">
+
+        <div class="single-pagination-prev">
+            
+            <div class="single-pagination-container-prev">
+                <div class="single-pagination-text">←</div>
+                <div class="single-pagination-text">
+                    <a href="/posts/%E7%AE%97%E6%B3%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E6%B1%87%E6%80%BB/">
+                        排序算法汇总
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="single-pagination-next">
+            
+        </div>
+
+    </div>
+
+    <hr />
+</div>
+
+
+
+  
+
+  
+
+  
+  <div class="back-to-top">
+    <a href="#top">
+      back to top
+    </a>
+  </div>
+  
+
+</div>
+
+
+    </main>
+  </div>
+
+  <footer>
+    
+
+    
+    <p>Powered by
+        <a href="https://gohugo.io/">Hugo</a>
+        and
+        <a href="https://github.com/tomfran/typo">tomfran/typo</a>
+    </p>
+    
+    
+    
+
+
+  </footer>
+
+  
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body);"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false }
+      ]
+    });
+  });
+</script>
+  
+
+</body>
+
+<script src="/js/theme-switch.js"></script>
+<script defer src="/js/copy-code.js"></script>
+</html>
