@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en-us"
+  dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+
+<link rel="icon" type="image/ico" href="https://weenable.github.io//favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://weenable.github.io//favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://weenable.github.io//favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://weenable.github.io//android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://weenable.github.io//apple-touch-icon.png">
+
+<meta name="description" content=""/>
+
+
+
+<title>
+    
+    传统merkle树和utreexo(rolling merkle tree) | Ween&#39;s Blog
+    
+</title>
+
+<link rel="canonical" href="https://weenable.github.io/posts/web3/%E4%BC%A0%E7%BB%9Fmerkle%E6%A0%91%E5%92%8Cutreexorolling-merkle-tree/"/>
+
+<meta property="og:url" content="https://weenable.github.io/posts/web3/%E4%BC%A0%E7%BB%9Fmerkle%E6%A0%91%E5%92%8Cutreexorolling-merkle-tree/">
+  <meta property="og:site_name" content="Ween&#39;s Blog">
+  <meta property="og:title" content="传统merkle树和utreexo(rolling merkle tree)">
+  <meta property="og:description" content="传统Merkle树实现 # package main import ( &#34;crypto/sha256&#34; &#34;encoding/hex&#34; &#34;fmt&#34; ) func hashPair(a, b []byte) []byte { h := sha256.New() h.Write([]byte{0x01}) // 内部节点前缀 if hex.EncodeToString(a) &lt; hex.EncodeToString(b) { h.Write(a) h.Write(b) } else { h.Write(b) h.Write(a) } return h.Sum(nil) } type MerkleTree struct { nodes [][]byte } func NewMerkleTree() *MerkleTree { return &amp;MerkleTree{nodes: make([][]byte, 0)} } func (mt *MerkleTree) Add(data []byte) { mt.nodes = append(mt.nodes, data) } func (mt *MerkleTree) Root() []byte { if len(mt.nodes) == 0 { return nil } level := make([][]byte, len(mt.nodes)) copy(level, mt.nodes) for len(level) &gt; 1 { var nextLevel [][]byte for i := 0; i &lt; len(level); i &#43;= 2 { if i&#43;1 &gt;= len(level) { nextLevel = append(nextLevel, hashPair(level[i], level[i])) } else { nextLevel = append(nextLevel, hashPair(level[i], level[i&#43;1])) } } level = nextLevel } return level[0] } func main() { testData := [][]byte{ []byte(&#34;Transaction1&#34;), []byte(&#34;Transaction2&#34;), []byte(&#34;Transaction3&#34;), []byte(&#34;Transaction4&#34;), } fmt.Println(&#34;=== 传统Merkle树测试 ===&#34;) mt := NewMerkleTree() for i, data := range testData { mt.Add(data) fmt.Printf(&#34;添加第%d个交易后的根哈希: %x\n&#34;, i&#43;1, mt.Root()) } } === 传统Merkle树测试 === 添加第1个交易后的根哈希: 5472616e73616374696f6e31 添加第2个交易后的根哈希: ae8f5f113879432c68c9aa01a45e2cf0b3da92243277f0db78cf3a868141f73e 添加第3个交易后的根哈希: a76764553968d075e0a82751ec1dbced37b5be3ef29bb3765867da9a5178e81d 添加第4个交易后的根哈希: 170d56828552760c53ae90f4241b6fdd8a2d85c783264e92d887557527802169 UTreexo（rolling merkle tree）实现 # 和传统merkle相比，主要差异点在于add节点的时候，rolling merkle只需要存储最终的合并根哈希">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-05-06T19:14:03+08:00">
+    <meta property="article:modified_time" content="2025-05-06T19:14:03+08:00">
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/assets/combined.min.db1f6bdda2e5a4d5c9a316aa295aaeba691b0d6154397bbb6787fea95b273e6a.css" media="all">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+<body class="auto">
+
+  <div class="content">
+    <header>
+      
+
+<div class="header">
+
+    
+
+    <h1 class="header-title">
+        <a href="https://weenable.github.io/">Ween&#39;s Blog</a>
+    </h1>
+
+    <div class="flex">
+        
+
+        
+        
+      
+        <p class="small ">
+            <a href="/" >
+                /home
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/posts" >
+                /posts
+            </a>
+        </p>
+        
+      
+        <p class="small ">
+            <a href="/categories" >
+                /categories
+            </a>
+        </p>
+        
+        
+    </div>
+
+    
+
+</div>
+
+    </header>
+
+    <main class="main">
+      
+
+
+
+
+
+
+
+<div  class="autonumber" >
+
+  <div class="single-intro-container">
+
+    
+
+    <h1 class="single-title">传统merkle树和utreexo(rolling merkle tree)</h1>
+    
+
+    
+
+    <p class="single-readtime">
+      
+      
+      
+      <time datetime="2025-05-06T19:14:03&#43;08:00">May 6, 2025</time>
+      
+
+      
+      &nbsp; · &nbsp;
+      2 min read
+      
+    </p>
+
+  </div>
+
+  
+
+  
+
+  
+  <aside class="toc">
+    <p><strong>Table of contents</strong></p>
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#传统merkle树实现">传统Merkle树实现</a></li>
+        <li><a href="#utreexorolling-merkle-tree实现">UTreexo（rolling merkle tree）实现</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </aside>
+  
+
+  
+
+  <div class="single-content">
+    <h3 class="heading" id="传统merkle树实现">
+  传统Merkle树实现
+  <a class="anchor" href="#%e4%bc%a0%e7%bb%9fmerkle%e6%a0%91%e5%ae%9e%e7%8e%b0">#</a>
+</h3>
+<pre tabindex="0"><code>package main  
+  
+import (  
+    &#34;crypto/sha256&#34;  
+    &#34;encoding/hex&#34;
+    &#34;fmt&#34;
+)  
+  
+func hashPair(a, b []byte) []byte {  
+    h := sha256.New()  
+    h.Write([]byte{0x01}) // 内部节点前缀  
+    if hex.EncodeToString(a) &lt; hex.EncodeToString(b) {  
+       h.Write(a)  
+       h.Write(b)  
+    } else {  
+       h.Write(b)  
+       h.Write(a)  
+    }  
+    return h.Sum(nil)  
+}  
+  
+type MerkleTree struct {  
+    nodes [][]byte  
+}  
+  
+func NewMerkleTree() *MerkleTree {  
+    return &amp;MerkleTree{nodes: make([][]byte, 0)}  
+}  
+  
+func (mt *MerkleTree) Add(data []byte) {  
+    mt.nodes = append(mt.nodes, data)  
+}  
+  
+func (mt *MerkleTree) Root() []byte {  
+    if len(mt.nodes) == 0 {  
+       return nil  
+    }  
+    level := make([][]byte, len(mt.nodes))  
+    copy(level, mt.nodes)  
+  
+    for len(level) &gt; 1 {  
+       var nextLevel [][]byte  
+       for i := 0; i &lt; len(level); i += 2 {  
+          if i+1 &gt;= len(level) {  
+             nextLevel = append(nextLevel, hashPair(level[i], level[i]))  
+          } else {  
+             nextLevel = append(nextLevel, hashPair(level[i], level[i+1]))  
+          }  
+       }  
+       level = nextLevel  
+    }  
+  
+    return level[0]  
+}  
+  
+func main() {  
+    testData := [][]byte{  
+       []byte(&#34;Transaction1&#34;),  
+       []byte(&#34;Transaction2&#34;),  
+       []byte(&#34;Transaction3&#34;),  
+       []byte(&#34;Transaction4&#34;),  
+    }  
+    fmt.Println(&#34;=== 传统Merkle树测试 ===&#34;)  
+    mt := NewMerkleTree()  
+    for i, data := range testData {  
+       mt.Add(data)  
+       fmt.Printf(&#34;添加第%d个交易后的根哈希: %x\n&#34;, i+1, mt.Root())  
+    }  
+}
+
+
+=== 传统Merkle树测试 ===
+添加第1个交易后的根哈希: 5472616e73616374696f6e31
+添加第2个交易后的根哈希: ae8f5f113879432c68c9aa01a45e2cf0b3da92243277f0db78cf3a868141f73e
+添加第3个交易后的根哈希: a76764553968d075e0a82751ec1dbced37b5be3ef29bb3765867da9a5178e81d
+添加第4个交易后的根哈希: 170d56828552760c53ae90f4241b6fdd8a2d85c783264e92d887557527802169
+</code></pre><h3 class="heading" id="utreexorolling-merkle-tree实现">
+  UTreexo（rolling merkle tree）实现
+  <a class="anchor" href="#utreexorolling-merkle-tree%e5%ae%9e%e7%8e%b0">#</a>
+</h3>
+<p>和传统merkle相比，主要差异点在于add节点的时候，rolling merkle只需要存储最终的合并根哈希</p>
+<pre tabindex="0"><code>type RollingMerkle struct {  
+    roots     [][]byte  
+    numLeaves int  
+}  
+  
+func NewRollingMerkle() *RollingMerkle {  
+    return &amp;RollingMerkle{roots: make([][]byte, 0)}  
+}  
+  
+func (rm *RollingMerkle) Add(data []byte) {  
+    newRoot := hashLeaf(data)  
+    h := 0  
+    for (rm.numLeaves&gt;&gt;h)&amp;1 == 1 {  
+       // 弹出最后一个根并合并  
+       lastRoot := rm.roots[len(rm.roots)-1]  
+       rm.roots = rm.roots[:len(rm.roots)-1]  
+       newRoot = hashPair(lastRoot, newRoot)  
+       h++  
+    }  
+    rm.roots = append(rm.roots, newRoot)  
+    rm.numLeaves++  
+}  
+  
+func (rm *RollingMerkle) Root() []byte {  
+    if len(rm.roots) == 0 {  
+       return nil  
+    }  
+    // 合并所有剩余根节点  
+    finalRoot := rm.roots[0]  
+    for _, root := range rm.roots[1:] {  
+       finalRoot = hashPair(finalRoot, root)  
+    }  
+    return finalRoot  
+}  
+  
+// ========================== 哈希工具函数 ==========================func hashLeaf(data []byte) []byte {  
+    h := sha256.New()  
+    h.Write([]byte{0x00}) // 叶子节点前缀  
+    h.Write(data)  
+    return h.Sum(nil)  
+}  
+  
+func hashPair(a, b []byte) []byte {  
+    h := sha256.New()  
+    h.Write([]byte{0x01}) // 内部节点前缀  
+    if hex.EncodeToString(a) &lt; hex.EncodeToString(b) {  
+       h.Write(a)  
+       h.Write(b)  
+    } else {  
+       h.Write(b)  
+       h.Write(a)  
+    }  
+    return h.Sum(nil)  
+}  
+  
+// ========================== 测试代码 ==========================func main() {  
+    testData := [][]byte{  
+       []byte(&#34;Transaction1&#34;),  
+       []byte(&#34;Transaction2&#34;),  
+       []byte(&#34;Transaction3&#34;),  
+       []byte(&#34;Transaction4&#34;),  
+    }  
+      
+    fmt.Println(&#34;\n=== Rolling Merkle测试 ===&#34;)  
+    rm := NewRollingMerkle()  
+    for i, data := range testData {  
+       rm.Add(data)  
+       fmt.Printf(&#34;添加第%d个交易后的根哈希: %x\n&#34;, i+1, rm.Root())  
+       fmt.Printf(&#34;当前根数量: %d\n&#34;, len(rm.roots))  
+    }  
+}
+</code></pre>
+    
+  </div>
+
+  
+
+  
+
+  
+  
+
+<div class="single-pagination">
+    <hr />
+
+    <div class="flex">
+
+        <div class="single-pagination-prev">
+            
+            <div class="single-pagination-container-prev">
+                <div class="single-pagination-text">←</div>
+                <div class="single-pagination-text">
+                    <a href="/posts/web3/p2p%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF-%E4%BB%A5%E5%A4%AA%E5%9D%8Ap2p%E8%BF%9E%E6%8E%A5/">
+                        P2P核心技术： 以太坊P2P连接
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="single-pagination-next">
+            
+        </div>
+
+    </div>
+
+    <hr />
+</div>
+
+
+
+  
+
+  
+
+  
+  <div class="back-to-top">
+    <a href="#top">
+      back to top
+    </a>
+  </div>
+  
+
+</div>
+
+
+    </main>
+  </div>
+
+  <footer>
+    
+
+    
+    <p>Powered by
+        <a href="https://gohugo.io/">Hugo</a>
+        and
+        <a href="https://github.com/tomfran/typo">tomfran/typo</a>
+    </p>
+    
+    
+    
+
+
+  </footer>
+
+  
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+
+<script defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body);"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false }
+      ]
+    });
+  });
+</script>
+  
+
+</body>
+
+<script src="/js/theme-switch.js"></script>
+<script defer src="/js/copy-code.js"></script>
+</html>
